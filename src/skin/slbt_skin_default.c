@@ -139,6 +139,12 @@ const struct argv_option slbt_default_options[] = {
 				"followed by the creation of libfoo.so "
 				"as a symlink thereto"},
 
+	{"dlopen",		0,TAG_DLOPEN,ARGV_OPTARG_REQUIRED,
+				ARGV_OPTION_HYBRID_ONLY|ARGV_OPTION_HYBRID_SPACE,
+				0,"<module>",
+				"add the directory containing %s to the library path "
+				"[currently a no-op]"},
+
 	{"export-symbols",	0,TAG_EXPSYM_FILE,ARGV_OPTARG_REQUIRED,
 				ARGV_OPTION_HYBRID_ONLY|ARGV_OPTION_HYBRID_SPACE,
 				0,"<symfile>",
