@@ -35,7 +35,7 @@ static const char * slbt_output_error_header(const struct slbt_error_info * erri
 static const char * slbt_output_strerror(const struct slbt_error_info * erri)
 {
 	if (erri->flags & SLBT_ERROR_CUSTOM)
-		return "flow error: unexpected condition or other.";
+		return "flow error: unexpected condition or other";
 
 	else if (erri->flags & SLBT_ERROR_NESTED)
 		return "";
