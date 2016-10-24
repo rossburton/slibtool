@@ -221,21 +221,11 @@ struct slbt_common_ctx {
 };
 
 struct slbt_driver_ctx {
-	const char **			units;
 	const char *			program;
 	const char *			module;
 	const struct slbt_common_ctx *	cctx;
 	struct slbt_error_info **	errv;
 	void *				any;
-};
-
-struct slbt_unit_ctx {
-	const char * const *		path;
-	const struct slbt_input *	map;
-	const struct slbt_common_ctx *	cctx;
-	void *				any;
-	int				status;
-	int				nerrors;
 };
 
 /* package info */
@@ -245,9 +235,6 @@ slbt_api				const struct slbt_source_version * slbt_source_version(void);
 slbt_api int  slbt_get_driver_ctx	(char ** argv, char ** envp, uint32_t flags, struct slbt_driver_ctx **);
 slbt_api int  slbt_create_driver_ctx	(const struct slbt_common_ctx *, struct slbt_driver_ctx **);
 slbt_api void slbt_free_driver_ctx	(struct slbt_driver_ctx *);
-
-slbt_api int  slbt_get_unit_ctx		(const struct slbt_driver_ctx *, const char * path, struct slbt_unit_ctx **);
-slbt_api void slbt_free_unit_ctx	(struct slbt_unit_ctx *);
 
 /* execution context api */
 slbt_api int  slbt_get_exec_ctx		(const struct slbt_driver_ctx *, struct slbt_exec_ctx **);
@@ -267,8 +254,6 @@ slbt_api int  slbt_set_alternate_host	(const struct slbt_driver_ctx *, const cha
 slbt_api void slbt_reset_alternate_host	(const struct slbt_driver_ctx *);
 
 /* helper api */
-slbt_api int  slbt_map_input		(int fd, const char * path, int prot, struct slbt_input *);
-slbt_api int  slbt_unmap_input		(struct slbt_input *);
 slbt_api int  slbt_archive_import	(const struct slbt_driver_ctx *, struct slbt_exec_ctx *,
 					 char * dstarchive, char * srcarchive);
 slbt_api int  slbt_copy_file		(const struct slbt_driver_ctx *, struct slbt_exec_ctx *,

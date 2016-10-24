@@ -72,11 +72,6 @@ static void slbt_perform_driver_actions(struct slbt_driver_ctx * dctx)
 		slbt_exec_uninstall(dctx,0);
 }
 
-static void slbt_perform_unit_actions(struct slbt_unit_ctx * uctx)
-{
-	(void)uctx;
-}
-
 static int slbt_exit(struct slbt_driver_ctx * dctx, int ret)
 {
 	slbt_output_error_vector(dctx);
@@ -89,8 +84,6 @@ int slbt_main(int argc, char ** argv, char ** envp)
 	int				ret;
 	uint64_t			flags;
 	struct slbt_driver_ctx *	dctx;
-	struct slbt_unit_ctx *		uctx;
-	const char **			unit;
 	char *				program;
 	char *				dash;
 	char *				sargv[5];
@@ -160,13 +153,6 @@ int slbt_main(int argc, char ** argv, char ** envp)
 			return slbt_exit(dctx,2);
 
 	slbt_perform_driver_actions(dctx);
-
-	for (unit=dctx->units; *unit; unit++) {
-		if (!(slbt_get_unit_ctx(dctx,*unit,&uctx))) {
-			slbt_perform_unit_actions(uctx);
-			slbt_free_unit_ctx(uctx);
-		}
-	}
 
 	return slbt_exit(dctx,dctx->errv[0] ? 2 : 0);
 }

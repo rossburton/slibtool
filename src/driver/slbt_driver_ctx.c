@@ -73,7 +73,6 @@ struct slbt_driver_ctx_alloc {
 	struct argv_meta *		meta;
 	struct slbt_driver_ctx_impl	ctx;
 	uint64_t			guard;
-	const char *			units[];
 };
 
 static void slbt_output_raw_vector(char ** argv, char ** envp)
@@ -146,17 +145,13 @@ static int slbt_driver_usage(
 
 static struct slbt_driver_ctx_impl * slbt_driver_ctx_alloc(
 	struct argv_meta *		meta,
-	const struct slbt_common_ctx *	cctx,
-	size_t				nunits)
+	const struct slbt_common_ctx *	cctx)
 {
 	struct slbt_driver_ctx_alloc *	ictx;
 	size_t				size;
-	struct argv_entry *		entry;
-	const char **			units;
 	int				elements;
 
 	size =  sizeof(struct slbt_driver_ctx_alloc);
-	size += (nunits+1)*sizeof(const char *);
 
 	if (!(ictx = calloc(1,size)))
 		return 0;
@@ -164,17 +159,12 @@ static struct slbt_driver_ctx_impl * slbt_driver_ctx_alloc(
 	if (cctx)
 		memcpy(&ictx->ctx.cctx,cctx,sizeof(*cctx));
 
-	for (entry=meta->entries,units=ictx->units; entry->fopt || entry->arg; entry++)
-		if (!entry->fopt)
-			*units++ = entry->arg;
-
 	elements = sizeof(ictx->ctx.erribuf) / sizeof(*ictx->ctx.erribuf);
 
 	ictx->ctx.errinfp  = &ictx->ctx.erriptr[0];
 	ictx->ctx.erricap  = &ictx->ctx.erriptr[--elements];
 
 	ictx->meta = meta;
-	ictx->ctx.ctx.units = ictx->units;
 	ictx->ctx.ctx.errv  = ictx->ctx.errinfp;
 	return &ictx->ctx;
 }
@@ -810,7 +800,6 @@ int slbt_get_driver_ctx(
 	const struct argv_option *	options;
 	struct argv_meta *		meta;
 	struct argv_entry *		entry;
-	size_t				nunits;
 	const char *			program;
 
 	options = slbt_default_options;
@@ -821,7 +810,6 @@ int slbt_get_driver_ctx(
 	if (!(meta = argv_get(sargv.targv,options,slbt_argv_flags(flags))))
 		return -1;
 
-	nunits	= 0;
 	program = argv_program_name(argv[0]);
 	memset(&cctx,0,sizeof(cctx));
 
@@ -831,7 +819,7 @@ int slbt_get_driver_ctx(
 	/* full annotation when annotation is on; */
 	cctx.drvflags |= SLBT_DRIVER_ANNOTATE_FULL;
 
-	/* get options, count units */
+	/* get options */
 	for (entry=meta->entries; entry->fopt || entry->arg; entry++) {
 		if (entry->fopt) {
 			switch (entry->tag) {
@@ -1057,8 +1045,7 @@ int slbt_get_driver_ctx(
 					cctx.drvflags &= ~(uint64_t)SLBT_DRIVER_SHARED;
 					break;
 			}
-		} else
-			nunits++;
+		}
 	}
 
 	/* debug: raw argument vector */
@@ -1072,7 +1059,7 @@ int slbt_get_driver_ctx(
 	}
 
 	/* driver context */
-	if (!(ctx = slbt_driver_ctx_alloc(meta,&cctx,nunits)))
+	if (!(ctx = slbt_driver_ctx_alloc(meta,&cctx)))
 		return slbt_get_driver_ctx_fail(meta);
 
 	ctx->ctx.program	= program;
@@ -1134,7 +1121,7 @@ int slbt_create_driver_ctx(
 	if (!(meta = argv_get(argv,slbt_default_options,0)))
 		return -1;
 
-	if (!(ctx = slbt_driver_ctx_alloc(meta,cctx,0)))
+	if (!(ctx = slbt_driver_ctx_alloc(meta,cctx)))
 		return slbt_get_driver_ctx_fail(0);
 
 	ctx->ctx.cctx = &ctx->cctx;

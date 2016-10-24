@@ -83,13 +83,6 @@ struct slbt_driver_ctx_impl {
 	struct slbt_error_info	erribuf[64];
 };
 
-struct slbt_unit_ctx_impl {
-	const char *		path;
-	struct slbt_input	map;
-	struct slbt_common_ctx	cctx;
-	struct slbt_unit_ctx	uctx;
-};
-
 static inline struct slbt_driver_ctx_impl * slbt_get_driver_ictx(const struct slbt_driver_ctx * dctx)
 {
 	uintptr_t addr;
