@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include <unistd.h>
 #include <slibtool/slibtool.h>
 
 static const char aclr_reset[]   = "\x1b[0m";
