@@ -100,9 +100,9 @@ int slbt_main(int argc, char ** argv, char ** envp)
 		sargv[4] = 0;
 
 		return (slbt_get_driver_ctx(sargv,envp,SLBT_DRIVER_FLAGS,&dctx))
-			? 2 : (slbt_version(dctx) < 0)
-				? slbt_exit(dctx,2)
-				: slbt_exit(dctx,0);
+			? SLBT_ERROR : (slbt_version(dctx) < 0)
+				? slbt_exit(dctx,SLBT_ERROR)
+				: slbt_exit(dctx,SLBT_OK);
 	}
 
 	/* program */
@@ -146,13 +146,15 @@ int slbt_main(int argc, char ** argv, char ** envp)
 
 	/* driver context */
 	if ((ret = slbt_get_driver_ctx(argv,envp,flags,&dctx)))
-		return (ret == SLBT_USAGE) ? !--argc : 2;
+		return (ret == SLBT_USAGE)
+			? !--argc
+			: SLBT_ERROR;
 
 	if (dctx->cctx->drvflags & SLBT_DRIVER_VERSION)
 		if ((slbt_version(dctx)) < 0)
-			return slbt_exit(dctx,2);
+			return slbt_exit(dctx,SLBT_ERROR);
 
 	slbt_perform_driver_actions(dctx);
 
-	return slbt_exit(dctx,dctx->errv[0] ? 2 : 0);
+	return slbt_exit(dctx,dctx->errv[0] ? SLBT_ERROR : SLBT_OK);
 }

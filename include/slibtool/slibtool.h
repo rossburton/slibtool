@@ -23,10 +23,7 @@ extern "C" {
 /* status codes */
 #define SLBT_OK				0x00
 #define SLBT_USAGE			0x01
-#define SLBT_BAD_OPT			0x02
-#define SLBT_BAD_OPT_VAL		0x03
-#define SLBT_IO_ERROR			0xA0
-#define SLBT_MAP_ERROR			0xA1
+#define SLBT_ERROR			0x02
 
 /* driver flags */
 #define SLBT_DRIVER_VERBOSITY_NONE	0x0000
