@@ -160,12 +160,13 @@ struct slbt_version_info {
 };
 
 struct slbt_error_info {
-	int				syserror;
-	int				liberror;
-	const char *			function;
-	int				line;
-	unsigned			flags;
-	void *				ctx;
+	const struct slbt_driver_ctx *	edctx;
+	int				esyscode;
+	int				elibcode;
+	const char *			efunction;
+	int				eline;
+	unsigned			eflags;
+	void *				eany;
 };
 
 struct slbt_host_params {
