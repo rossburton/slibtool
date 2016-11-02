@@ -479,7 +479,7 @@ static int slbt_exec_link_adjust_argument_vector(
 			} else if (freqd) {
 				free(depsmeta->altv);
 				free(depsmeta->args);
-				return SLBT_CUSTOM_ERROR(dctx,0);
+				return SLBT_CUSTOM_ERROR(dctx,SLBT_ERR_LINK_FREQ);
 			}
 		}
 	}
@@ -719,7 +719,7 @@ static int slbt_exec_link_create_import_library(
 
 		/* libfoo.so.def is under .libs/ */
 		if (!(slash = strrchr(deffilename,'/')))
-			return SLBT_CUSTOM_ERROR(dctx,0);
+			return SLBT_CUSTOM_ERROR(dctx,SLBT_ERR_LINK_FLOW);
 
 		if (slbt_create_symlink(
 				dctx,ectx,
@@ -730,7 +730,7 @@ static int slbt_exec_link_create_import_library(
 
 		/* libfoo.so.def.{flavor} is under .libs/ */
 		if (!(slash = strrchr(hosttag,'/')))
-			return SLBT_CUSTOM_ERROR(dctx,0);
+			return SLBT_CUSTOM_ERROR(dctx,SLBT_ERR_LINK_FLOW);
 
 		if (slbt_create_symlink(
 				dctx,ectx,

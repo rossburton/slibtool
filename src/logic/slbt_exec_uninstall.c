@@ -286,7 +286,7 @@ int slbt_exec_uninstall(
 				: ARGV_VERBOSITY_NONE)))
 		return slbt_exec_uninstall_fail(
 			actx,meta,
-			SLBT_CUSTOM_ERROR(dctx,0));
+			SLBT_CUSTOM_ERROR(dctx,SLBT_ERR_UNINSTALL_FAIL));
 
 	/* dest, alternate argument vector options */
 	argv  = ectx->altv;

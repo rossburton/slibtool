@@ -1199,7 +1199,7 @@ int  slbt_set_alternate_host(
 			&ictx->ctx.cctx.ahost,
 			&ictx->ctx.cctx.acfgmeta)) {
 		slbt_free_host_params(&ictx->ctx.ahost);
-		return SLBT_CUSTOM_ERROR(ctx,0);
+		return SLBT_CUSTOM_ERROR(ctx,SLBT_ERR_HOST_INIT);
 	}
 
 	slbt_init_flavor_settings(
@@ -1211,7 +1211,7 @@ int  slbt_set_alternate_host(
 			&ictx->ctx.cctx,
 			&ictx->ctx.cctx.ahost)) {
 		slbt_free_host_params(&ictx->ctx.ahost);
-		return SLBT_CUSTOM_ERROR(ctx,0);
+		return SLBT_CUSTOM_ERROR(ctx,SLBT_ERR_LDRPATH_INIT);
 	}
 
 	return 0;

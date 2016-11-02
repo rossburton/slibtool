@@ -117,7 +117,7 @@ static int slbt_exec_install_import_libraries(
 
 	/* (dso is under .libs) */
 	if (!(slash = strrchr(srcbuf,'/')))
-		return SLBT_CUSTOM_ERROR(dctx,0);
+		return SLBT_CUSTOM_ERROR(dctx,SLBT_ERR_INSTALL_FLOW);
 
 	/* libfoo.so.x.y.z */
 	if ((size_t)snprintf(implib,sizeof(implib),"%s",
@@ -125,14 +125,14 @@ static int slbt_exec_install_import_libraries(
 				    - strlen(dctx->cctx->settings.impsuffix))
 		return SLBT_BUFFER_ERROR(dctx);
 
-	/* guard againt an infinitely long version */
+	/* guard against an infinitely long version */
 	mark = srcbuf + strlen(srcbuf);
 
 	/* rev */
 	if (!(dot = strrchr(srcbuf,'.')))
-		return SLBT_CUSTOM_ERROR(dctx,0);
+		return SLBT_CUSTOM_ERROR(dctx,SLBT_ERR_INSTALL_FLOW);
 	else if ((size_t)(mark - dot) > sizeof(rev))
-		return SLBT_CUSTOM_ERROR(dctx,0);
+		return SLBT_CUSTOM_ERROR(dctx,SLBT_ERR_INSTALL_REV);
 	else {
 		strcpy(rev,dot);
 		*dot = 0;
@@ -140,9 +140,9 @@ static int slbt_exec_install_import_libraries(
 
 	/* minor */
 	if (!(dot = strrchr(srcbuf,'.')))
-		return SLBT_CUSTOM_ERROR(dctx,0);
+		return SLBT_CUSTOM_ERROR(dctx,SLBT_ERR_INSTALL_FLOW);
 	else if ((size_t)(mark - dot) > sizeof(minor))
-		return SLBT_CUSTOM_ERROR(dctx,0);
+		return SLBT_CUSTOM_ERROR(dctx,SLBT_ERR_INSTALL_REV);
 	else {
 		strcpy(minor,dot);
 		*dot = 0;
@@ -150,16 +150,16 @@ static int slbt_exec_install_import_libraries(
 
 	/* major */
 	if (!(dot = strrchr(srcbuf,'.')))
-		return SLBT_CUSTOM_ERROR(dctx,0);
+		return SLBT_CUSTOM_ERROR(dctx,SLBT_ERR_INSTALL_FLOW);
 	else if ((size_t)(mark - dot) > sizeof(major))
-		return SLBT_CUSTOM_ERROR(dctx,0);
+		return SLBT_CUSTOM_ERROR(dctx,SLBT_ERR_INSTALL_REV);
 	else {
 		strcpy(major,dot);
 		*dot = 0;
 	}
 
 	if (!(dot = strrchr(srcbuf,'.')))
-		return SLBT_CUSTOM_ERROR(dctx,0);
+		return SLBT_CUSTOM_ERROR(dctx,SLBT_ERR_INSTALL_FLOW);
 
 	/* .libs/libfoo.so.def.host */
 	if ((size_t)snprintf(hostlnk,sizeof(hostlnk),"%s.def.host",
@@ -172,7 +172,7 @@ static int slbt_exec_install_import_libraries(
 
 	/* host/flabor */
 	if (!(host = strrchr(hosttag,'.')))
-		return SLBT_CUSTOM_ERROR(dctx,0);
+		return SLBT_CUSTOM_ERROR(dctx,SLBT_ERR_INSTALL_FLOW);
 	else
 		host++;
 
@@ -491,12 +491,12 @@ static int slbt_exec_install_entry(
 	if ((dot = strrchr(slnkname,'.')))
 		*dot = 0;
 	else
-		return SLBT_CUSTOM_ERROR(dctx,0);
+		return SLBT_CUSTOM_ERROR(dctx,SLBT_ERR_INSTALL_FLOW);
 
 	if ((dot = strrchr(slnkname,'.')))
 		*dot = 0;
 	else
-		return SLBT_CUSTOM_ERROR(dctx,0);
+		return SLBT_CUSTOM_ERROR(dctx,SLBT_ERR_INSTALL_FLOW);
 
 	/* destination symlink: dstdir/libfoo.so.x */
 	if ((size_t)snprintf(dlnkname,sizeof(dlnkname),"%s/%s",
@@ -581,7 +581,7 @@ int slbt_exec_install(
 				: ARGV_VERBOSITY_NONE)))
 		return slbt_exec_install_fail(
 			actx,meta,
-			SLBT_CUSTOM_ERROR(dctx,0));
+			SLBT_CUSTOM_ERROR(dctx,SLBT_ERR_INSTALL_FAIL));
 
 	/* dest, alternate argument vector options */
 	argv = ectx->altv;

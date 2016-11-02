@@ -144,5 +144,5 @@ int slbt_archive_import(
 		unlink(src);
 
 	return ret || (rpid != pid) || ectx->exitcode
-		? SLBT_CUSTOM_ERROR(dctx,0) : 0;
+		? SLBT_CUSTOM_ERROR(dctx,SLBT_ERR_ARCHIVE_IMPORT) : 0;
 }
