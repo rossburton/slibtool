@@ -788,6 +788,10 @@ static int slbt_exec_link_create_archive(
 	char		arfile [PATH_MAX];
 	char		arlink [PATH_MAX];
 
+	/* -disable-static? */
+	if (dctx->cctx->drvflags & SLBT_DRIVER_DISABLE_STATIC)
+		return 0;
+
 	/* initial state */
 	slbt_reset_arguments(ectx);
 
