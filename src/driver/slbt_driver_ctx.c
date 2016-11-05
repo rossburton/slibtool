@@ -1048,6 +1048,14 @@ int slbt_get_driver_ctx(
 		}
 	}
 
+	/* -disable-static? */
+	if (cctx.drvflags & SLBT_DRIVER_DISABLE_STATIC)
+		cctx.drvflags &= ~(uint64_t)SLBT_DRIVER_STATIC;
+
+	/* -disable-shared? */
+	if (cctx.drvflags & SLBT_DRIVER_DISABLE_SHARED)
+		cctx.drvflags &= ~(uint64_t)SLBT_DRIVER_SHARED;
+
 	/* debug: raw argument vector */
 	if (cctx.drvflags & SLBT_DRIVER_DEBUG)
 		slbt_output_raw_vector(argv,envp);
