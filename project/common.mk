@@ -1,8 +1,4 @@
-COMMON_SRCS = \
-	src/internal/slibtool_errinfo_impl.c \
-	src/internal/slibtool_libmeta_impl.c \
-	src/internal/slibtool_objmeta_impl.c \
-	src/internal/slibtool_symlink_impl.c \
+API_SRCS = \
 	src/driver/slbt_amain.c \
 	src/driver/slbt_driver_ctx.c \
 	src/helper/slbt_archive_import.c \
@@ -21,5 +17,13 @@ COMMON_SRCS = \
 	src/skin/slbt_skin_install.c \
 	src/skin/slbt_skin_uninstall.c \
 
+INTERNAL_SRCS = \
+	src/internal/$(PACKAGE)_errinfo_impl.c \
+	src/internal/$(PACKAGE)_libmeta_impl.c \
+	src/internal/$(PACKAGE)_objmeta_impl.c \
+	src/internal/$(PACKAGE)_symlink_impl.c \
+
 APP_SRCS = \
 	src/slibtool.c
+
+COMMON_SRCS = $(API_SRCS) $(INTERNAL_SRCS)
