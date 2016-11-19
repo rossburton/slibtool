@@ -84,7 +84,7 @@ static void slbt_output_raw_vector(char ** argv, char ** envp)
 
 	(void)envp;
 
-	if ((fcolor = isatty(STDOUT_FILENO)))
+	if ((fcolor = isatty(STDERR_FILENO)))
 		fprintf(stderr,"%s%s",aclr_bold,aclr_red);
 
 	fprintf(stderr,"\n\n\n%s",argv[0]);
