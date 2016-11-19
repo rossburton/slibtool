@@ -790,7 +790,8 @@ static int slbt_exec_link_create_archive(
 
 	/* -disable-static? */
 	if (dctx->cctx->drvflags & SLBT_DRIVER_DISABLE_STATIC)
-		return 0;
+		if (dctx->cctx->rpath)
+			return 0;
 
 	/* initial state */
 	slbt_reset_arguments(ectx);
