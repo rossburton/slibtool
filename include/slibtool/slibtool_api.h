@@ -19,9 +19,9 @@
 
 /* slbt_api */
 #ifndef SLBT_APP
-#if     defined (SLBT_BUILD)
+#if     defined (SLBT_EXPORT)
 #define slbt_api slbt_export
-#elif   defined (SLBT_SHARED)
+#elif   defined (SLBT_IMPORT)
 #define slbt_api slbt_import
 #elif   defined (SLBT_STATIC)
 #define slbt_api
