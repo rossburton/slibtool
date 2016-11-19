@@ -17,10 +17,9 @@ const struct argv_option slbt_default_options[] = {
 				"set the execution mode, where <mode> "
 				"is one of {%s}. of the above modes, "
 				"'finish' is not needed and is therefore "
-				"a no-op; 'clean' and 'uninstall' are "
-				"currently not implemented, however "
-				"their addition is expected before "
-				"the next release"},
+				"a no-op; 'clean' is currently not implemented, "
+				"however its addition is expected before the "
+				"next major release"},
 
 	{"finish",		0,TAG_FINISH,ARGV_OPTARG_NONE,0,0,0,
 				"same as --mode=finish"},
