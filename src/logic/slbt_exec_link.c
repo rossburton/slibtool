@@ -627,8 +627,8 @@ static int slbt_exec_link_create_dep_file(
 			if (!farchive) {
 				if ((size_t)snprintf(
 						mark,size,
-						".%s.slibtool.deps",
-						dctx->cctx->settings.dsoprefix)
+						"%s.slibtool.deps",
+						dctx->cctx->settings.dsosuffix)
 						>= size)
 					return SLBT_BUFFER_ERROR(dctx);
 
