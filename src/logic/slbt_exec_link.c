@@ -524,6 +524,7 @@ static int slbt_exec_link_create_dep_file(
 	char	depfile[PATH_MAX];
 	struct  stat st;
 	int	ldepth;
+	int	fdyndep;
 
 	(void)dctx;
 
@@ -579,8 +580,23 @@ static int slbt_exec_link_create_dep_file(
 				reladir[1] = 0;
 			}
 
+
+			/* dynamic library dependency? */
+			strcpy(depfile,*parg);
+			mark = depfile + (base - *parg);
+			size = sizeof(depfile) - (base - *parg);
+
+			if ((size_t)snprintf(mark,size,".libs/%s",base)
+					>= size)
+				return SLBT_BUFFER_ERROR(dctx);
+
+			mark = strrchr(mark,'.');
+			strcpy(mark,dctx->cctx->settings.dsoprefix);
+
+			fdyndep = !stat(depfile,&st);
+
 			/* [-L... as needed] */
-			if (!farchive && (base > *parg) && (ectx->ldirdepth >= 0)) {
+			if (fdyndep && (base > *parg) && (ectx->ldirdepth >= 0)) {
 				if (fputs("-L",ectx->fdeps) < 0) {
 					fclose(fdeps);
 					return SLBT_SYSTEM_ERROR(dctx);
@@ -599,7 +615,7 @@ static int slbt_exec_link_create_dep_file(
 			}
 
 			/* -ldeplib */
-			if (!farchive) {
+			if (fdyndep) {
 				*popt = 0;
 				mark  = base;
 				mark += strlen(dctx->cctx->settings.dsoprefix);
