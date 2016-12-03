@@ -1,3 +1,21 @@
+0.5.12:
+
+This patch release includes a variety of fixes and improvements in slibtool's
+functionality, as well as several enhancements to slibtool's own build system.
+
+- driver: added support for -dlopen (currently a no-op).
+- error trace: improved and extended the initial interface.
+- error trace: added descriptive error strings for custom errors.
+- link mode: properly determine whether -L and -ldeplib are needed.
+- link mode: do not respect -disable-static without -rpath.
+- link mode: respect -disable-static.
+- link mode: properly handle indirect dependencies of .a archives.
+- link mode: confirm need for archive import; limit .a deps to external deps.
+- compile mode: respect -disable-static and -disable-shared.
+- install mode: respect -disable-static.
+- legacy wrappers: implemented compatible library and objects wrappers.
+- build system: added support for cygwin's, mingw's, and msys's semantics.
+
 0.5.11:
 
 This patch release provides -portbld- support for systems that still need
