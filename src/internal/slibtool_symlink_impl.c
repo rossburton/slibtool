@@ -12,8 +12,9 @@
 #include "slibtool_errinfo_impl.h"
 #include "slibtool_symlink_impl.h"
 
-#define SLBT_DEV_NULL_FLAGS	(SLBT_DRIVER_ALL_STATIC \
-				| SLBT_DRIVER_DISABLE_SHARED)
+#define SLBT_DEV_NULL_FLAGS	(SLBT_DRIVER_ALL_STATIC      \
+				| SLBT_DRIVER_DISABLE_SHARED \
+				| SLBT_DRIVER_DISABLE_STATIC)
 
 int slbt_create_symlink(
 	const struct slbt_driver_ctx *	dctx,

@@ -786,6 +786,31 @@ static int slbt_exec_link_create_import_library(
 	return 0;
 }
 
+static int slbt_exec_link_create_noop_symlink(
+	const struct slbt_driver_ctx *	dctx,
+	struct slbt_exec_ctx *		ectx,
+	const char *			arfilename)
+{
+	struct stat st;
+
+	/* file exists? */
+	if (!(lstat(arfilename,&st)))
+		return 0;
+
+	/* needed? */
+	if (errno == ENOENT) {
+		if (slbt_create_symlink(
+				dctx,ectx,
+				"/dev/null",
+				arfilename,
+                                false))
+			return SLBT_NESTED_ERROR(dctx);
+		return 0;
+	}
+
+	return SLBT_SYSTEM_ERROR(dctx);
+}
+
 static int slbt_exec_link_create_archive(
 	const struct slbt_driver_ctx *	dctx,
 	struct slbt_exec_ctx *		ectx,
@@ -807,7 +832,8 @@ static int slbt_exec_link_create_archive(
 	/* -disable-static? */
 	if (dctx->cctx->drvflags & SLBT_DRIVER_DISABLE_STATIC)
 		if (dctx->cctx->rpath)
-			return 0;
+			return slbt_exec_link_create_noop_symlink(
+				dctx,ectx,arfilename);
 
 	/* initial state */
 	slbt_reset_arguments(ectx);
