@@ -1,3 +1,13 @@
+0.5.13:
+
+This patch release ensures successful installation of a shared library with
+which no accompanying static archive was created. The release also includes
+two improvements in slibtool's own build system.
+
+- link mode: create an archive /dev/null symlink placeholder as needed.
+- PE soname support: added the designated LDFLAGS_SONAME variable.
+- build system: configure: pass --sysroot to the linker as a compiler argument.
+
 0.5.12:
 
 This patch release includes a variety of fixes and improvements in slibtool's
