@@ -128,7 +128,7 @@ static uint32_t slbt_argv_flags(uint32_t flags)
 static int slbt_driver_usage(
 	const char *			program,
 	const char *			arg,
-	const struct argv_option *	options,
+	const struct argv_option **	optv,
 	struct argv_meta *		meta)
 {
 	char header[512];
@@ -137,7 +137,7 @@ static int slbt_driver_usage(
 		"Usage: %s [options] <file>...\n" "Options:\n",
 		program);
 
-	argv_usage(stdout,header,options,arg);
+	argv_usage(stdout,header,optv,arg);
 	argv_free(meta);
 
 	return SLBT_USAGE;
@@ -191,8 +191,9 @@ static int slbt_split_argv(
 	struct argv_entry *		mode;
 	struct argv_entry *		config;
 	struct argv_entry *		finish;
-	const struct argv_option *	option;
-	const struct argv_option *	options = slbt_default_options;
+	const struct argv_option **	popt;
+	const struct argv_option **	optout;
+	const struct argv_option *	optv[SLBT_OPTV_ELEMENTS];
 	struct argv_ctx			ctx = {ARGV_VERBOSITY_NONE,
 						ARGV_MODE_SCAN,
 						0,0,0,0,0,0,0};
@@ -200,17 +201,19 @@ static int slbt_split_argv(
 	program = argv_program_name(argv[0]);
 
 	/* missing arguments? */
+	argv_optv_init(slbt_default_options,optv);
+
 	if (!argv[1] && (flags & SLBT_DRIVER_VERBOSITY_USAGE))
-		return slbt_driver_usage(program,0,options,0);
+		return slbt_driver_usage(program,0,optv,0);
 
 	/* initial argv scan: ... --mode=xxx ... <compiler> ... */
-	argv_scan(argv,options,&ctx,0);
+	argv_scan(argv,optv,&ctx,0);
 
 	/* invalid slibtool arguments? */
 	if (ctx.erridx && !ctx.unitidx) {
 		if (flags & SLBT_DRIVER_VERBOSITY_ERRORS)
 			argv_get(
-				argv,options,
+				argv,optv,
 				slbt_argv_flags(flags));
 		return -1;
 	}
@@ -219,7 +222,7 @@ static int slbt_split_argv(
 	compiler = argv[ctx.unitidx];
 	argv[ctx.unitidx] = 0;
 
-	meta = argv_get(argv,options,ARGV_VERBOSITY_NONE);
+	meta = argv_get(argv,optv,ARGV_VERBOSITY_NONE);
 	argv[ctx.unitidx] = compiler;
 
 	/* missing all of --mode, --config, and --finish? */
@@ -263,9 +266,8 @@ static int slbt_split_argv(
 		sargv->targv[i] = argv[i];
 
 	/* split vectors: legacy mixture */
-	options = option_from_tag(
-			slbt_default_options,
-			TAG_OUTPUT);
+	for (optout=optv; optout[0]->tag != TAG_OUTPUT; optout++)
+		(void)0;
 
 	targv = sargv->targv + i;
 	cargv = sargv->cargv;
@@ -345,11 +347,11 @@ static int slbt_split_argv(
 			*targv++ = argv[i];
 
 		} else {
-			for (option=options; option->long_name; option++)
-				if (!(strcmp(option->long_name,&argv[i][1])))
+			for (popt=optout; popt[0] && popt[0]->long_name; popt++)
+				if (!(strcmp(popt[0]->long_name,&argv[i][1])))
 					break;
 
-			if (option->long_name)
+			if (popt[0] && popt[0]->long_name)
 				*targv++ = argv[i];
 			else
 				*cargv++ = argv[i];
@@ -797,17 +799,17 @@ int slbt_get_driver_ctx(
 	struct slbt_split_vector	sargv;
 	struct slbt_driver_ctx_impl *	ctx;
 	struct slbt_common_ctx		cctx;
-	const struct argv_option *	options;
+	const struct argv_option *	optv[SLBT_OPTV_ELEMENTS];
 	struct argv_meta *		meta;
 	struct argv_entry *		entry;
 	const char *			program;
 
-	options = slbt_default_options;
+	argv_optv_init(slbt_default_options,optv);
 
 	if (slbt_split_argv(argv,flags,&sargv))
 		return -1;
 
-	if (!(meta = argv_get(sargv.targv,options,slbt_argv_flags(flags))))
+	if (!(meta = argv_get(sargv.targv,optv,slbt_argv_flags(flags))))
 		return -1;
 
 	program = argv_program_name(argv[0]);
@@ -826,7 +828,7 @@ int slbt_get_driver_ctx(
 				case TAG_HELP:
 				case TAG_HELP_ALL:
 					if (flags & SLBT_DRIVER_VERBOSITY_USAGE)
-						return slbt_driver_usage(program,entry->arg,options,meta);
+						return slbt_driver_usage(program,entry->arg,optv,meta);
 
 				case TAG_VERSION:
 					cctx.drvflags |= SLBT_DRIVER_VERSION;
@@ -1122,11 +1124,14 @@ int slbt_create_driver_ctx(
 	const struct slbt_common_ctx *	cctx,
 	struct slbt_driver_ctx **	pctx)
 {
+	const struct argv_option *	optv[SLBT_OPTV_ELEMENTS];
 	struct argv_meta *		meta;
 	struct slbt_driver_ctx_impl *	ctx;
 	char *				argv[] = {"slibtool_driver",0};
 
-	if (!(meta = argv_get(argv,slbt_default_options,0)))
+	argv_optv_init(slbt_default_options,optv);
+
+	if (!(meta = argv_get(argv,optv,0)))
 		return -1;
 
 	if (!(ctx = slbt_driver_ctx_alloc(meta,cctx)))

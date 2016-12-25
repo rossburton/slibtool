@@ -14,6 +14,7 @@
 #define ARGV_DRIVER
 
 #include <slibtool/slibtool.h>
+#include "slibtool_driver_impl.h"
 #include "slibtool_install_impl.h"
 #include "slibtool_readlink_impl.h"
 #include "slibtool_spawn_impl.h"
@@ -24,7 +25,7 @@
 static int slbt_install_usage(
 	const char *			program,
 	const char *			arg,
-	const struct argv_option *	options,
+	const struct argv_option **	optv,
 	struct argv_meta *		meta)
 {
 	char header[512];
@@ -34,7 +35,7 @@ static int slbt_install_usage(
 		"Options:\n",
 		program);
 
-	argv_usage(stdout,header,options,arg);
+	argv_usage(stdout,header,optv,arg);
 	argv_free(meta);
 
 	return SLBT_USAGE;
@@ -545,8 +546,8 @@ int slbt_exec_install(
 	struct argv_entry *		copy;
 	struct argv_entry *		dest;
 	struct argv_entry *		last;
+	const struct argv_option *	optv[SLBT_OPTV_ELEMENTS];
 	char				dstdir[PATH_MAX];
-	const struct argv_option *	options = slbt_install_options;
 
 	/* dry run */
 	if (dctx->cctx->drvflags & SLBT_DRIVER_DRY_RUN)
@@ -570,13 +571,15 @@ int slbt_exec_install(
 		iargv++;
 
 	/* missing arguments? */
+	argv_optv_init(slbt_install_options,optv);
+
 	if (!iargv[1] && (dctx->cctx->drvflags & SLBT_DRIVER_VERBOSITY_USAGE))
-		return slbt_install_usage(dctx->program,0,options,0);
+		return slbt_install_usage(dctx->program,0,optv,0);
 
 	/* <install> argv meta */
 	if (!(meta = argv_get(
 			iargv,
-			options,
+			optv,
 			dctx->cctx->drvflags & SLBT_DRIVER_VERBOSITY_ERRORS
 				? ARGV_VERBOSITY_ERRORS
 				: ARGV_VERBOSITY_NONE)))

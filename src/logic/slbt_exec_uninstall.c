@@ -14,6 +14,7 @@
 #define ARGV_DRIVER
 
 #include <slibtool/slibtool.h>
+#include "slibtool_driver_impl.h"
 #include "slibtool_uninstall_impl.h"
 #include "slibtool_readlink_impl.h"
 #include "slibtool_errinfo_impl.h"
@@ -22,7 +23,7 @@
 static int slbt_uninstall_usage(
 	const char *			program,
 	const char *			arg,
-	const struct argv_option *	options,
+	const struct argv_option **	optv,
 	struct argv_meta *		meta)
 {
 	char header[512];
@@ -32,7 +33,7 @@ static int slbt_uninstall_usage(
 		"Options:\n",
 		program);
 
-	argv_usage(stdout,header,options,arg);
+	argv_usage(stdout,header,optv,arg);
 	argv_free(meta);
 
 	return SLBT_USAGE;
@@ -250,7 +251,7 @@ int slbt_exec_uninstall(
 	struct slbt_exec_ctx *		actx;
 	struct argv_meta *		meta;
 	struct argv_entry *		entry;
-	const struct argv_option *	options = slbt_uninstall_options;
+	const struct argv_option *	optv[SLBT_OPTV_ELEMENTS];
 
 	/* dry run */
 	if (dctx->cctx->drvflags & SLBT_DRIVER_DRY_RUN)
@@ -274,13 +275,15 @@ int slbt_exec_uninstall(
 		iargv++;
 
 	/* missing arguments? */
+	argv_optv_init(slbt_uninstall_options,optv);
+
 	if (!iargv[1] && (dctx->cctx->drvflags & SLBT_DRIVER_VERBOSITY_USAGE))
-		return slbt_uninstall_usage(dctx->program,0,options,0);
+		return slbt_uninstall_usage(dctx->program,0,optv,0);
 
 	/* <uninstall> argv meta */
 	if (!(meta = argv_get(
 			iargv,
-			options,
+			optv,
 			dctx->cctx->drvflags & SLBT_DRIVER_VERBOSITY_ERRORS
 				? ARGV_VERBOSITY_ERRORS
 				: ARGV_VERBOSITY_NONE)))
@@ -325,7 +328,7 @@ int slbt_exec_uninstall(
 
 	/* --help */
 	if (flags & SLBT_UNINSTALL_HELP) {
-		slbt_uninstall_usage(dctx->program,0,options,meta);
+		slbt_uninstall_usage(dctx->program,0,optv,meta);
 		return 0;
 	}
 

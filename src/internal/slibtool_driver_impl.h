@@ -8,6 +8,8 @@
 #include <slibtool/slibtool.h>
 #include "argv/argv.h"
 
+#define SLBT_OPTV_ELEMENTS 64
+
 extern const struct argv_option slbt_default_options[];
 
 enum app_tags {
