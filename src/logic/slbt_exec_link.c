@@ -591,7 +591,7 @@ static int slbt_exec_link_create_dep_file(
 				return SLBT_BUFFER_ERROR(dctx);
 
 			mark = strrchr(mark,'.');
-			strcpy(mark,dctx->cctx->settings.dsoprefix);
+			strcpy(mark,dctx->cctx->settings.dsosuffix);
 
 			fdyndep = !stat(depfile,&st);
 
