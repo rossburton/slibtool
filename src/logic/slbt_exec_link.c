@@ -33,8 +33,7 @@ struct slbt_deps_meta {
 /* ----------  --------------------- -----   ------                */
 /* libfoo.a    [-shared|-static]     bar.lo  libfoo.a              */
 /*                                                                 */
-/* ar cru libfoo.a bar.o                                           */
-/* ranlib libfoo.a                                                 */
+/* ar crs libfoo.a bar.o                                           */
 /*                                                                 */
 /*******************************************************************/
 
@@ -46,8 +45,7 @@ struct slbt_deps_meta {
 /*                                           .libs/libfoo.a        */
 /*                                           .libs/libfoo.la (lnk) */
 /*                                                                 */
-/* ar cru .libs/libfoo.a .libs/bar.o                               */
-/* ranlib .libs/libfoo.a                                           */
+/* ar crs .libs/libfoo.a .libs/bar.o                               */
 /* (generate libfoo.la)                                            */
 /* ln -s ../libfoo.la .libs/libfoo.la                              */
 /*                                                                 */
@@ -61,8 +59,7 @@ struct slbt_deps_meta {
 /*                                           .libs/libfoo.a        */
 /*                                           .libs/libfoo.la (lnk) */
 /*                                                                 */
-/* ar cru .libs/libfoo.a bar.o                                     */
-/* ranlib .libs/libfoo.a                                           */
+/* ar crs .libs/libfoo.a bar.o                                     */
 /* (generate libfoo.la)                                            */
 /* ln -s ../libfoo.la .libs/libfoo.la                              */
 /*                                                                 */
@@ -823,7 +820,6 @@ static int slbt_exec_link_create_archive(
 	char *		base;
 	char *		mark;
 	char *		slash;
-	char *		ranlib[3];
 	char		program[PATH_MAX];
 	char		output [PATH_MAX];
 	char		arfile [PATH_MAX];
@@ -856,7 +852,7 @@ static int slbt_exec_link_create_archive(
 
 	aarg    = ectx->altv;
 	*aarg++ = program;
-	*aarg++ = "cru";
+	*aarg++ = "crs";
 	*aarg++ = output;
 
 	/* input argument adjustment */
@@ -891,25 +887,6 @@ static int slbt_exec_link_create_archive(
 		if (slbt_adjust_input_argument(*parg,".la",".a",true))
 			if (slbt_archive_import(dctx,ectx,output,*parg))
 				return SLBT_NESTED_ERROR(dctx);
-
-	/* ranlib argv */
-	if ((size_t)snprintf(program,sizeof(program),"%s",
-			dctx->cctx->host.ranlib) >= sizeof(program))
-		return SLBT_BUFFER_ERROR(dctx);
-
-	ranlib[0] = program;
-	ranlib[1] = output;
-	ranlib[2] = 0;
-	ectx->argv = ranlib;
-
-	/* step output */
-	if (!(dctx->cctx->drvflags & SLBT_DRIVER_SILENT))
-		if (slbt_output_link(dctx,ectx))
-			return SLBT_NESTED_ERROR(dctx);
-
-	/* ranlib spawn */
-	if ((slbt_spawn(ectx,true) < 0) || ectx->exitcode)
-		return SLBT_SPAWN_ERROR(dctx);
 
 	if (fprimary && (dctx->cctx->drvflags & SLBT_DRIVER_DISABLE_SHARED)) {
 		strcpy(arlink,output);
