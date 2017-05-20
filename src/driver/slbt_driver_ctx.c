@@ -296,14 +296,7 @@ static int slbt_split_argv(
 		else if (!(strcmp("Xcompiler",&argv[i][1])))
 			*cargv++ = argv[++i];
 
-		else if (!(strncmp("-target=",&argv[i][1],strlen("-target="))))
-			*targv++ = argv[i];
-
-		else if (!(strcmp("-target",&argv[i][1]))) {
-			*targv++ = argv[i++];
-			*targv++ = argv[i];
-
-		} else if ((argv[i][1] == 'R')  && (argv[i][2] == 0)) {
+		else if ((argv[i][1] == 'R')  && (argv[i][2] == 0)) {
 			*targv++ = argv[i++];
 			*targv++ = argv[i];
 
