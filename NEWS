@@ -1,3 +1,16 @@
+0.5.14:
+
+This patch release provides several fixes at the driver level, as well as
+several improvements to slibtool's own internals. Addition of extended
+variable support to slibtool's ./configure now makes it fully compatible
+with (distro) build systems that pass those variable to ./configure by
+default.
+
+- link mode: fix fdepfile construction when determining dynlib dependency.
+- link mode: static archives: always have ar(1) act as ranlib(1).
+- driver: refine handling of --target.
+- build system: added extended dir variables.
+
 0.5.13:
 
 This patch release ensures successful installation of a shared library with
