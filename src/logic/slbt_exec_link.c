@@ -495,10 +495,7 @@ static int slbt_exec_link_remove_file(
 	if (!(unlink(target)) || (errno == ENOENT))
 		return 0;
 
-	if (!(dctx->cctx->drvflags & SLBT_DRIVER_SILENT))
-		strerror(errno);
-
-	return -1;
+	return SLBT_SYSTEM_ERROR(dctx);
 }
 
 static int slbt_exec_link_create_dep_file(

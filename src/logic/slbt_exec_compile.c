@@ -27,9 +27,6 @@ static int slbt_exec_compile_remove_file(
 	if (!(unlink(target)) || (errno == ENOENT))
 		return 0;
 
-	if (!(dctx->cctx->drvflags & SLBT_DRIVER_SILENT))
-		strerror(errno);
-
 	return SLBT_SYSTEM_ERROR(dctx);
 }
 
