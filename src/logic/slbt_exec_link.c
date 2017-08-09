@@ -484,6 +484,120 @@ static int slbt_exec_link_adjust_argument_vector(
 	return 0;
 }
 
+static int slbt_exec_link_finalize_argument_vector(
+	const struct slbt_driver_ctx *	dctx,
+	struct slbt_exec_ctx *		ectx)
+{
+	char *		sargv[1024];
+	char **		sargvbuf;
+	char **		largv;
+	char **		parg;
+	char **		base;
+	char *		arg;
+	char *		dot;
+	char **		dst;
+	char **		mark;
+	char **		cap;
+	size_t		argc;
+	size_t		first;
+	size_t		last;
+	size_t		objidx;
+
+	base   = ectx->argv;
+	first  = 0;
+	last   = 0;
+	objidx = 0;
+
+	for (parg=ectx->argv; *parg; parg++) {
+		arg = *parg;
+
+		if (arg[0] == '-') {
+			if ((arg[1] == 'l') || arg[1] == 'L') {
+				last  = parg - base;
+				first = first ? first : last;
+			} else if (!objidx
+					&& (arg[1] == 'W')
+					&& (arg[2] == 'l')
+					&& (arg[3] == ',')) {
+				last  = parg - base;
+				first = first ? first : last;
+			}
+
+		} else if (objidx) {
+			(void)0;
+
+		} else if ((dot = strrchr(arg,'.'))) {
+			if (!strcmp(dot,".o")
+					|| !strcmp(dot,".lo")
+					|| !strcmp(dot,dctx->cctx->settings.arsuffix)
+					|| !strcmp(dot,dctx->cctx->settings.dsosuffix)
+					|| !strcmp(dot,dctx->cctx->settings.impsuffix))
+				objidx = parg - base;
+		}
+	}
+
+	/* have faith? */
+	if (!first || (objidx < first))
+		return 0;
+
+	/* buffer */
+	if (last - first + 1 <= 1024) {
+		largv    = sargv;
+		sargvbuf = 0;
+
+	} else if (!(sargvbuf = calloc(1,(last - first) * sizeof(char *)))) {
+		return SLBT_SYSTEM_ERROR(dctx);
+
+	} else {
+		largv = sargvbuf;
+	}
+
+	/* bulk-move dependency arguments to the end */
+	if ((base[last][1] == 'l') && !base[last][2])
+		last++;
+
+	else if ((base[last][1] == 'L') && !base[last][2])
+		last++;
+
+	argc = parg - base;
+	mark = &base[first];
+	cap  = &base[last + 1];
+
+	for (parg=mark, dst=largv; parg<cap; parg++, dst++)
+		*dst = *parg;
+
+	mark = &base[last + 1];
+	cap  = &base[argc];
+	dst  = &base[first];
+
+	for (parg=mark; parg<cap; parg++, dst++)
+		*dst = *parg;
+
+	mark = largv;
+	cap  = &largv[last - first + 1];
+	dst  = &base[argc - (last - first + 1)];
+
+	for (parg=mark; parg<cap; parg++, dst++)
+		*dst = *parg;
+
+	/* output annotation */
+	if ((ectx->lout[0] > &base[last]) && (ectx->lout[0] < &base[argc])) {
+		ectx->lout[0] -= (last - first + 1);
+		ectx->lout[1] -= (last - first + 1);
+	}
+
+	if ((ectx->mout[0] > &base[last]) && (ectx->lout[0] < &base[argc])) {
+		ectx->mout[0] -= (last - first + 1);
+		ectx->mout[1] -= (last - first + 1);
+	}
+
+	/* all done */
+	if (sargvbuf)
+		free(sargvbuf);
+
+	return 0;
+}
+
 static int slbt_exec_link_remove_file(
 	const struct slbt_driver_ctx *	dctx,
 	struct slbt_exec_ctx *		ectx,
@@ -1042,6 +1156,10 @@ static int slbt_exec_link_create_library(
 	ectx->argv    = depsmeta.altv;
 	ectx->program = depsmeta.altv[0];
 
+	/* sigh */
+	if (slbt_exec_link_finalize_argument_vector(dctx,ectx))
+		return SLBT_NESTED_ERROR(dctx);
+
 	/* step output */
 	if (!(dctx->cctx->drvflags & SLBT_DRIVER_SILENT))
 		if (slbt_output_link(dctx,ectx))
@@ -1192,6 +1310,10 @@ static int slbt_exec_link_create_executable(
 		return slbt_exec_link_exit(
 			&depsmeta,
 			SLBT_SYSTEM_ERROR(dctx));
+
+	/* sigh */
+	if (slbt_exec_link_finalize_argument_vector(dctx,ectx))
+		return SLBT_NESTED_ERROR(dctx);
 
 	/* step output */
 	if (!(dctx->cctx->drvflags & SLBT_DRIVER_SILENT))
