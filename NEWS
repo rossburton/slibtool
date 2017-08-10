@@ -1,3 +1,13 @@
+0.5.16:
+
+This patch release fixes a subtle bug in slibtool-shared's
+generation of dependency lists when creating convenience
+library archives. Beginning with this release, the mesa
+package can be built with slibtool in its entirety.
+
+- slibtool-shared: properly handle .la arguments when creating an archive.
+- slbt_exec_link_create_dep_file(): properly initialize and track fdeps.
+
 0.5.15:
 
 This patch release provides seamless support for the building of
