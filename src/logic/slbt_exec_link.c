@@ -634,10 +634,10 @@ static int slbt_exec_link_create_dep_file(
 	int	ldepth;
 	int	fdyndep;
 
-	(void)dctx;
-
-	if (ectx->fdeps)
+	if (ectx->fdeps) {
 		fclose(ectx->fdeps);
+		ectx->fdeps = 0;
+	}
 
 	if ((size_t)snprintf(depfile,sizeof(depfile),"%s.slibtool.deps",
 				libfilename)
@@ -677,10 +677,8 @@ static int slbt_exec_link_create_dep_file(
 				if ((size_t)snprintf(reladir,
 							sizeof(reladir),
 							"%s",*parg)
-						>= sizeof(reladir)) {
-					fclose(fdeps);
+						>= sizeof(reladir))
 					return SLBT_SYSTEM_ERROR(dctx);
-				}
 
 				reladir[base - *parg - 1] = 0;
 			} else {
@@ -701,25 +699,20 @@ static int slbt_exec_link_create_dep_file(
 			mark = strrchr(mark,'.');
 			strcpy(mark,dctx->cctx->settings.dsosuffix);
 
+			fdeps   = 0;
 			fdyndep = !stat(depfile,&st);
 
 			/* [-L... as needed] */
 			if (fdyndep && (base > *parg) && (ectx->ldirdepth >= 0)) {
-				if (fputs("-L",ectx->fdeps) < 0) {
-					fclose(fdeps);
+				if (fputs("-L",ectx->fdeps) < 0)
 					return SLBT_SYSTEM_ERROR(dctx);
-				}
 
 				for (ldepth=ectx->ldirdepth; ldepth; ldepth--)
-					if (fputs("../",ectx->fdeps) < 0) {
-						fclose(fdeps);
+					if (fputs("../",ectx->fdeps) < 0)
 						return SLBT_SYSTEM_ERROR(dctx);
-					}
 
-				if (fprintf(ectx->fdeps,"%s/.libs\n",reladir) < 0) {
-					fclose(fdeps);
+				if (fprintf(ectx->fdeps,"%s/.libs\n",reladir) < 0)
 					return SLBT_SYSTEM_ERROR(dctx);
-				}
 			}
 
 			/* -ldeplib */
@@ -728,10 +721,8 @@ static int slbt_exec_link_create_dep_file(
 				mark  = base;
 				mark += strlen(dctx->cctx->settings.dsoprefix);
 
-				if (fprintf(ectx->fdeps,"-l%s\n",mark) < 0) {
-					fclose(fdeps);
+				if (fprintf(ectx->fdeps,"-l%s\n",mark) < 0)
 					return SLBT_SYSTEM_ERROR(dctx);
-				}
 
 				*popt = '.';
 			}
@@ -757,9 +748,7 @@ static int slbt_exec_link_create_dep_file(
 					return SLBT_BUFFER_ERROR(dctx);
 
 				if (stat(depfile,&st)) {
-					if (errno == ENOENT)
-						fdeps = 0;
-					else
+					if (errno != ENOENT)
 						return SLBT_SYSTEM_ERROR(dctx);
 				} else {
 					if (!(fdeps = fopen(depfile,"r")))
@@ -780,7 +769,7 @@ static int slbt_exec_link_create_dep_file(
 			}
 
 			/* [-l... as needed] */
-			deplib = st.st_size
+			deplib = fdeps && st.st_size
 				? fgets(deplibs,st.st_size+1,fdeps)
 				: 0;
 
@@ -802,7 +791,8 @@ static int slbt_exec_link_create_dep_file(
 				deplib = fgets(deplibs,st.st_size+1,fdeps);
 			}
 
-			fclose(fdeps);
+			if (fdeps)
+				fclose(fdeps);
 		}
 
 		if (plib)
