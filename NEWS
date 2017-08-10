@@ -1,3 +1,8 @@
+0.5.17:
+
+This patch release fixes a subtle bug in the newly added support for
+packages that depend on the reordering of linker arguments.
+
 0.5.16:
 
 This patch release fixes a subtle bug in slibtool-shared's
