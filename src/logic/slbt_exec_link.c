@@ -511,17 +511,13 @@ static int slbt_exec_link_finalize_argument_vector(
 	for (parg=ectx->argv; *parg; parg++) {
 		arg = *parg;
 
-		if (arg[0] == '-') {
-			if ((arg[1] == 'l') || arg[1] == 'L') {
-				last  = parg - base;
-				first = first ? first : last;
-			} else if (!objidx
-					&& (arg[1] == 'W')
-					&& (arg[2] == 'l')
-					&& (arg[3] == ',')) {
-				last  = parg - base;
-				first = first ? first : last;
-			}
+		if ((arg[0] == '-') && (arg[1] == 'l')) {
+			last  = parg - base;
+			first = first ? first : last;
+
+		} else if ((arg[0] == '-') && (arg[1] == 'L')) {
+			last  = parg - base;
+			first = first ? first : last;
 
 		} else if (objidx) {
 			(void)0;
@@ -533,6 +529,20 @@ static int slbt_exec_link_finalize_argument_vector(
 					|| !strcmp(dot,dctx->cctx->settings.dsosuffix)
 					|| !strcmp(dot,dctx->cctx->settings.impsuffix))
 				objidx = parg - base;
+		} else if ((arg[0] == '-')
+					&& (arg[1] == 'W')
+					&& (arg[2] == 'l')
+					&& (arg[3] == ',')) {
+			if ((!strcmp(&arg[4],"--whole-archive"))
+					&& parg[1] && parg[2]
+					&& !strcmp(parg[2],"-Wl,--no-whole-archive")
+					&& (dot = strrchr(parg[1],'.'))
+					&& !strcmp(dot,dctx->cctx->settings.arsuffix)) {
+				objidx = parg - base;
+			} else {
+				last  = parg - base;
+				first = first ? first : last;
+			}
 		}
 	}
 
