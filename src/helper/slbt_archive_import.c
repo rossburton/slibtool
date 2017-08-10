@@ -14,6 +14,7 @@
 
 #include <slibtool/slibtool.h>
 #include "slibtool_spawn_impl.h"
+#include "slibtool_readlink_impl.h"
 #include "slibtool_errinfo_impl.h"
 
 static char * slbt_mri_argument(
@@ -88,6 +89,10 @@ int slbt_archive_import(
 	char	mridst [L_tmpnam];
 	char	mrisrc [L_tmpnam];
 	char	program[PATH_MAX];
+
+	if (!slbt_readlink(srcarchive,program,sizeof(program)))
+		if (!(strcmp(program,"/dev/null")))
+			return 0;
 
 	if ((size_t)snprintf(program,sizeof(program),"%s",
 			dctx->cctx->host.ar) >= sizeof(program))

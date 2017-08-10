@@ -633,6 +633,7 @@ static int slbt_exec_link_create_dep_file(
 	struct  stat st;
 	int	ldepth;
 	int	fdyndep;
+	int	fnodeps;
 
 	if (ectx->fdeps) {
 		fclose(ectx->fdeps);
@@ -701,6 +702,7 @@ static int slbt_exec_link_create_dep_file(
 
 			fdeps   = 0;
 			fdyndep = !stat(depfile,&st);
+			fnodeps = farchive && fdyndep;
 
 			/* [-L... as needed] */
 			if (fdyndep && (base > *parg) && (ectx->ldirdepth >= 0)) {
@@ -756,7 +758,7 @@ static int slbt_exec_link_create_dep_file(
 				}
 			}
 
-			if (farchive || !fdeps) {
+			if (!fnodeps && (farchive || !fdeps)) {
 				if ((size_t)snprintf(mark,size,".a.slibtool.deps")
 						>= size)
 					return SLBT_BUFFER_ERROR(dctx);
