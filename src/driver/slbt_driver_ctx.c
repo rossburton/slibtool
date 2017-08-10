@@ -339,6 +339,9 @@ static int slbt_split_argv(
 			*targv++ = argv[i++];
 			*targv++ = argv[i];
 
+		} else if (!(strcmp("thread-safe",&argv[i][1]))) {
+			(void)0;
+
 		} else {
 			for (popt=optout; popt[0] && popt[0]->long_name; popt++)
 				if (!(strcmp(popt[0]->long_name,&argv[i][1])))
