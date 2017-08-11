@@ -239,5 +239,9 @@ const struct argv_option slbt_default_options[] = {
 				ARGV_OPTION_HYBRID_ONLY,0,0,
 				"disallow unresolved references"},
 
+	{"thread-safe",		0,TAG_THREAD_SAFE,ARGV_OPTARG_NONE,
+				ARGV_OPTION_HYBRID_ONLY,0,0,
+				"sleep tight, your threads are now safe"},
+
 	{0,0,0,0,0,0,0,0}
 };
