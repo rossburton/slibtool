@@ -1481,6 +1481,9 @@ int slbt_exec_link(
 	} else if (dctx->cctx->drvflags & SLBT_DRIVER_DISABLE_SHARED) {
 		fstaticonly = true;
 		fpic        = false;
+	} else if (dctx->cctx->drvflags & SLBT_DRIVER_DISABLE_STATIC) {
+		fstaticonly = false;
+		fpic        = true;
 	} else if (dctx->cctx->drvflags & SLBT_DRIVER_SHARED) {
 		fstaticonly = false;
 		fpic        = true;
