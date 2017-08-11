@@ -144,6 +144,12 @@ const struct argv_option slbt_default_options[] = {
 				"add the directory containing %s to the library path "
 				"[currently a no-op]"},
 
+	{"dlpreopen",		0,TAG_DLPREOPEN,ARGV_OPTARG_REQUIRED,
+				ARGV_OPTION_HYBRID_ONLY|ARGV_OPTION_HYBRID_SPACE,
+				0,"<FILE>",
+				"Link the specified %s into the generated library "
+				"or executable"},
+
 	{"export-symbols",	0,TAG_EXPSYM_FILE,ARGV_OPTARG_REQUIRED,
 				ARGV_OPTION_HYBRID_ONLY|ARGV_OPTION_HYBRID_SPACE,
 				0,"<symfile>",
