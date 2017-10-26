@@ -532,6 +532,31 @@ static int slbt_init_host_params(
 		host->dlltool = drvhost->dlltool;
 	}
 
+	/* mdso */
+	if (host->mdso)
+		cfgmeta->mdso = cfgexplicit;
+
+	else if (strcmp(host->flavor,"cygwin")
+			&& strcmp(host->flavor,"midipix")
+			&& strcmp(host->flavor,"mingw")) {
+		host->mdso = "";
+		cfgmeta->mdso = "not applicable";
+
+	} else {
+		if (!(drvhost->mdso = calloc(1,toollen)))
+			return -1;
+
+		if (fnative) {
+			strcpy(drvhost->mdso,"mdso");
+			cfgmeta->mdso = cfgnative;
+		} else {
+			sprintf(drvhost->mdso,"%s-mdso",host->host);
+			cfgmeta->mdso = cfghost;
+		}
+
+		host->mdso = drvhost->mdso;
+	}
+
 	return 0;
 }
 
@@ -554,6 +579,9 @@ static void slbt_free_host_params(struct slbt_host_strs * host)
 
 	if (host->dlltool)
 		free(host->dlltool);
+
+	if (host->mdso)
+		free(host->mdso);
 
 	memset(host,0,sizeof(*host));
 }
@@ -902,6 +930,18 @@ int slbt_get_driver_ctx(
 
 					break;
 
+				case TAG_IMPLIB:
+					if (!strcmp("idata",entry->arg)) {
+						cctx.drvflags |= SLBT_DRIVER_IMPLIB_IDATA;
+						cctx.drvflags &= ~(uint64_t)SLBT_DRIVER_IMPLIB_DSOMETA;
+
+					} else if (!strcmp("never",entry->arg)) {
+						cctx.drvflags |= SLBT_DRIVER_IMPLIB_DSOMETA;
+						cctx.drvflags &= ~(uint64_t)SLBT_DRIVER_IMPLIB_IDATA;
+					}
+
+					break;
+
 				case TAG_WARNINGS:
 					if (!strcmp("all",entry->arg))
 						cctx.warnings = SLBT_WARNING_LEVEL_ALL;
@@ -961,6 +1001,10 @@ int slbt_get_driver_ctx(
 
 				case TAG_DLLTOOL:
 					cctx.host.dlltool = entry->arg;
+					break;
+
+				case TAG_MDSO:
+					cctx.host.mdso = entry->arg;
 					break;
 
 				case TAG_OUTPUT:

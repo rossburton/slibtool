@@ -26,6 +26,8 @@ extern "C" {
 #define SLBT_ERROR			0x02
 
 /* driver flags */
+#define SLBT_DRIVER_XFLAG(x)		((uint64_t)x << 32)
+
 #define SLBT_DRIVER_VERBOSITY_NONE	0x0000
 #define SLBT_DRIVER_VERBOSITY_ERRORS	0x0001
 #define SLBT_DRIVER_VERBOSITY_STATUS	0x0002
@@ -62,6 +64,9 @@ extern "C" {
 #define SLBT_DRIVER_ANNOTATE_ALWAYS	0x10000000
 #define SLBT_DRIVER_ANNOTATE_NEVER	0x20000000
 #define SLBT_DRIVER_ANNOTATE_FULL	0x40000000
+
+#define SLBT_DRIVER_IMPLIB_IDATA	SLBT_DRIVER_XFLAG(0x0001)
+#define SLBT_DRIVER_IMPLIB_DSOMETA	SLBT_DRIVER_XFLAG(0x0002)
 
 /* error flags */
 #define SLBT_ERROR_TOP_LEVEL		0x0001
@@ -189,6 +194,7 @@ struct slbt_host_params {
 	const char *			ar;
 	const char *			ranlib;
 	const char *			dlltool;
+	const char *			mdso;
 	const char *			ldrpath;
 };
 

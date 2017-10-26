@@ -63,6 +63,9 @@ int slbt_output_config(const struct slbt_driver_ctx * dctx)
 	if ((len = strlen(cctx->host.dlltool)) > midwidth)
 		midwidth = len;
 
+	if ((len = strlen(cctx->host.mdso)) > midwidth)
+		midwidth = len;
+
 	midwidth += SLBT_TAB_WIDTH;
 	midwidth &= (~(SLBT_TAB_WIDTH-1));
 
@@ -91,6 +94,9 @@ int slbt_output_config(const struct slbt_driver_ctx * dctx)
 		return SLBT_SYSTEM_ERROR(dctx);
 
 	if (slbt_output_config_line("dlltool",cctx->host.dlltool,cctx->cfgmeta.dlltool,midwidth))
+		return SLBT_SYSTEM_ERROR(dctx);
+
+	if (slbt_output_config_line("mdso",cctx->host.mdso,cctx->cfgmeta.mdso,midwidth))
 		return SLBT_SYSTEM_ERROR(dctx);
 
 	return fflush(stdout)

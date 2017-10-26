@@ -35,6 +35,8 @@ enum app_tags {
 	TAG_AR,
 	TAG_RANLIB,
 	TAG_DLLTOOL,
+	TAG_MDSO,
+	TAG_IMPLIB,
 	TAG_OUTPUT,
 	TAG_BINDIR,
 	TAG_LDRPATH,
@@ -71,6 +73,7 @@ struct slbt_host_strs {
 	char *		ar;
 	char *		ranlib;
 	char *		dlltool;
+	char *		mdso;
 };
 
 struct slbt_driver_ctx_impl {
