@@ -70,7 +70,7 @@ static void slbt_archive_import_child(
 	if (dup(fd[0]) == 0)
 		execvp(program,argv);
 
-	exit(EXIT_FAILURE);
+	_exit(EXIT_FAILURE);
 }
 
 int slbt_archive_import(

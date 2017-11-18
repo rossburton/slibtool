@@ -37,12 +37,12 @@ static void slbt_dump_machine_child(
 	close(1);
 
 	if ((fd[0] = open("/dev/null",O_RDONLY)))
-		exit(EXIT_FAILURE);
+		_exit(EXIT_FAILURE);
 
 	if (dup(fd[1]) == 1)
 		execvp(program,argv);
 
-	exit(EXIT_FAILURE);
+	_exit(EXIT_FAILURE);
 }
 
 int slbt_dump_machine(
