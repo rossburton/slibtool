@@ -65,9 +65,8 @@ static void slbt_archive_import_child(
 	argv[2] = 0;
 
 	close(fd[1]);
-	close(0);
 
-	if (dup(fd[0]) == 0)
+	if (dup2(fd[0],0) == 0)
 		execvp(program,argv);
 
 	_exit(EXIT_FAILURE);
