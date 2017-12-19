@@ -498,6 +498,8 @@ static int slbt_exec_link_finalize_argument_vector(
 	char **		dst;
 	char **		mark;
 	char **		cap;
+	int		flast;
+	int		fwhole;
 	size_t		argc;
 	size_t		first;
 	size_t		last;
@@ -509,40 +511,48 @@ static int slbt_exec_link_finalize_argument_vector(
 	objidx = 0;
 
 	for (parg=ectx->argv; *parg; parg++) {
-		arg = *parg;
+		arg    = *parg;
+		flast  = false;
+		fwhole = false;
 
-		if ((arg[0] == '-') && (arg[1] == 'l')) {
-			last  = parg - base;
-			first = first ? first : last;
+		if ((arg[0] == '-') && (arg[1] == 'l'))
+			flast = true;
 
-		} else if ((arg[0] == '-') && (arg[1] == 'L')) {
+		else if ((arg[0] == '-') && (arg[1] == 'L'))
+			flast = true;
+
+		else if ((dot = strrchr(arg,'.')))
+			flast = !strcmp(dot,dctx->cctx->settings.arsuffix)
+					|| !strcmp(dot,dctx->cctx->settings.dsosuffix)
+					|| !strcmp(dot,dctx->cctx->settings.impsuffix);
+
+		else if ((arg[0] == '-')
+				&& (arg[1] == 'W')
+				&& (arg[2] == 'l')
+				&& (arg[3] == ','))
+			fwhole = (!strcmp(&arg[4],"--whole-archive"))
+				&& parg[1] && parg[2]
+				&& !strcmp(parg[2],"-Wl,--no-whole-archive")
+				&& (dot = strrchr(parg[1],'.'))
+				&& !strcmp(dot,dctx->cctx->settings.arsuffix);
+
+
+		if (fwhole) {
+			parg   = &parg[2];
+			flast  = true;
+			objidx = parg - base;
+		}
+
+
+		if (flast) {
 			last  = parg - base;
 			first = first ? first : last;
 
 		} else if (objidx) {
 			(void)0;
 
-		} else if ((dot = strrchr(arg,'.'))) {
-			if (!strcmp(dot,".o")
-					|| !strcmp(dot,".lo")
-					|| !strcmp(dot,dctx->cctx->settings.arsuffix)
-					|| !strcmp(dot,dctx->cctx->settings.dsosuffix)
-					|| !strcmp(dot,dctx->cctx->settings.impsuffix))
+		} else if (dot && (!strcmp(dot,".o") || !strcmp(dot,".lo"))) {
 				objidx = parg - base;
-		} else if ((arg[0] == '-')
-					&& (arg[1] == 'W')
-					&& (arg[2] == 'l')
-					&& (arg[3] == ',')) {
-			if ((!strcmp(&arg[4],"--whole-archive"))
-					&& parg[1] && parg[2]
-					&& !strcmp(parg[2],"-Wl,--no-whole-archive")
-					&& (dot = strrchr(parg[1],'.'))
-					&& !strcmp(dot,dctx->cctx->settings.arsuffix)) {
-				objidx = parg - base;
-			} else {
-				last  = parg - base;
-				first = first ? first : last;
-			}
 		}
 	}
 
