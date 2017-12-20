@@ -490,125 +490,108 @@ static int slbt_exec_link_finalize_argument_vector(
 {
 	char *		sargv[1024];
 	char **		sargvbuf;
-	char **		largv;
-	char **		parg;
 	char **		base;
+	char **		parg;
+	char **		aarg;
+	char **		oarg;
+	char **		aargv;
+	char **		oargv;
+	char **		cap;
+	char **		src;
+	char **		dst;
 	char *		arg;
 	char *		dot;
-	char **		dst;
-	char **		mark;
-	char **		cap;
-	int		flast;
-	int		fwhole;
-	size_t		argc;
-	size_t		first;
-	size_t		last;
-	size_t		objidx;
+	const char *	arsuffix;
 
-	base   = ectx->argv;
-	first  = 0;
-	last   = 0;
-	objidx = 0;
+	/* vector size */
+	base     = ectx->argv;
+	arsuffix = dctx->cctx->settings.arsuffix;
 
-	for (parg=ectx->argv; *parg; parg++) {
-		arg    = *parg;
-		flast  = false;
-		fwhole = false;
-
-		if ((arg[0] == '-') && (arg[1] == 'l'))
-			flast = true;
-
-		else if ((arg[0] == '-') && (arg[1] == 'L'))
-			flast = true;
-
-		else if ((dot = strrchr(arg,'.')))
-			flast = !strcmp(dot,dctx->cctx->settings.arsuffix)
-					|| !strcmp(dot,dctx->cctx->settings.dsosuffix)
-					|| !strcmp(dot,dctx->cctx->settings.impsuffix);
-
-		else if ((arg[0] == '-')
-				&& (arg[1] == 'W')
-				&& (arg[2] == 'l')
-				&& (arg[3] == ','))
-			fwhole = (!strcmp(&arg[4],"--whole-archive"))
-				&& parg[1] && parg[2]
-				&& !strcmp(parg[2],"-Wl,--no-whole-archive")
-				&& (dot = strrchr(parg[1],'.'))
-				&& !strcmp(dot,dctx->cctx->settings.arsuffix);
-
-
-		if (fwhole) {
-			parg   = &parg[2];
-			flast  = true;
-			objidx = parg - base;
-		}
-
-
-		if (flast) {
-			last  = parg - base;
-			first = first ? first : last;
-
-		} else if (objidx) {
-			(void)0;
-
-		} else if (dot && (!strcmp(dot,".o") || !strcmp(dot,".lo"))) {
-				objidx = parg - base;
-		}
-	}
-
-	/* have faith? */
-	if (!first || (objidx < first))
-		return 0;
+	for (parg=base; *parg; parg++)
+		(void)0;
 
 	/* buffer */
-	if (last - first + 1 <= 1024) {
-		largv    = sargv;
+	if (parg - base < 512) {
+		aargv    = &sargv[0];
+		oargv    = &sargv[512];
+		aarg     = aargv;
+		oarg     = oargv;
 		sargvbuf = 0;
 
-	} else if (!(sargvbuf = calloc(1,(last - first) * sizeof(char *)))) {
+	} else if (!(sargvbuf = calloc(2*(parg-base+1),sizeof(char *)))) {
 		return SLBT_SYSTEM_ERROR(dctx);
 
 	} else {
-		largv = sargvbuf;
+		aargv = &sargvbuf[0];
+		oargv = &sargvbuf[parg-base+1];
+		aarg  = aargv;
+		oarg  = oargv;
 	}
 
-	/* bulk-move dependency arguments to the end */
-	if ((base[last][1] == 'l') && !base[last][2])
-		last++;
+	/* (program name) */
+	parg = &base[1];
 
-	else if ((base[last][1] == 'L') && !base[last][2])
-		last++;
+	/* split object args from all other args, record output annotation */
+	for (; *parg; ) {
+		if (ectx->lout[0] == parg) {
+			ectx->lout[0] = &aarg[0];
+			ectx->lout[1] = &aarg[1];
+		}
 
-	argc = parg - base;
-	mark = &base[first];
-	cap  = &base[last + 1];
+		if (ectx->mout[0] == parg) {
+			ectx->lout[0] = &aarg[0];
+			ectx->lout[1] = &aarg[1];
+		}
 
-	for (parg=mark, dst=largv; parg<cap; parg++, dst++)
-		*dst = *parg;
+		arg = *parg;
+		dot = strrchr(arg,'.');
 
-	mark = &base[last + 1];
-	cap  = &base[argc];
-	dst  = &base[first];
+		if (dot && (!strcmp(dot,".o") || !strcmp(dot,".lo"))) {
+			*oarg++ = *parg++;
 
-	for (parg=mark; parg<cap; parg++, dst++)
-		*dst = *parg;
+		} else if ((arg[0] == '-')
+				&& (arg[1] == 'W')
+				&& (arg[2] == 'l')
+				&& (arg[3] == ',')
+				&& !strcmp(&arg[4],"--whole-archive")
+				&& parg[1] && parg[2]
+				&& !strcmp(parg[2],"-Wl,--no-whole-archive")
+				&& (dot = strrchr(parg[1],'.'))
+				&& !strcmp(dot,arsuffix)) {
+			*oarg++ = *parg++;
+			*oarg++ = *parg++;
+			*oarg++ = *parg++;
+		} else {
+			*aarg++ = *parg++;
+		}
+	}
 
-	mark = largv;
-	cap  = &largv[last - first + 1];
-	dst  = &base[argc - (last - first + 1)];
+	/* (program name) */
+	dst = &base[1];
 
-	for (parg=mark; parg<cap; parg++, dst++)
-		*dst = *parg;
+	/* join object args */
+	src = oargv;
+	cap = oarg;
+
+	for (; src<cap; )
+		*dst++ = *src++;
+
+	/* join all other args */
+	src = aargv;
+	cap = aarg;
+
+	for (; src<cap; )
+		*dst++ = *src++;
 
 	/* output annotation */
-	if ((ectx->lout[0] > &base[last]) && (ectx->lout[0] < &base[argc])) {
-		ectx->lout[0] -= (last - first + 1);
-		ectx->lout[1] -= (last - first + 1);
+	if (ectx->lout[0]) {
+		ectx->lout[0] = &base[1] + (oarg - oargv) + (ectx->lout[0] - aargv);
+		ectx->lout[1] = ectx->lout[0] + 1;
 	}
 
-	if ((ectx->mout[0] > &base[last]) && (ectx->lout[0] < &base[argc])) {
-		ectx->mout[0] -= (last - first + 1);
-		ectx->mout[1] -= (last - first + 1);
+	if (ectx->mout[0]) {
+		ectx->mout[0] = &base[1] + (oarg - oargv) + (ectx->mout[0] - aargv);
+		ectx->mout[1] = ectx->mout[0] + 1;
 	}
 
 	/* all done */
