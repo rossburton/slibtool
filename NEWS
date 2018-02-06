@@ -1,3 +1,17 @@
+0.5.18:
+
+This patch release includes several important fixes to the link mode
+and driver logic. In addition, it adds mdso support to midipix targets,
+as well as updates slibtool's own build system.
+
+- link mode: re-implemented slbt_exec_link_finalize_argument_vector().
+- link mode: import library generation: added mdso support.
+- link mode: use -fpic objects with -disable-static.
+- driver: added --mdso and --implib support.
+- driver: added initial -dlpreopen support.
+- driver: support -thread-safe more elegantly.
+- driver: properly handle -thread-safe (no-op, compatibility).
+
 0.5.17:
 
 This patch release fixes a subtle bug in the newly added support for
