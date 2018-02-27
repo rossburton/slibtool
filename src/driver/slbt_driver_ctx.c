@@ -357,6 +357,32 @@ static int slbt_split_argv(
 	return 0;
 }
 
+static void slbt_get_host_quad(
+	char *	hostbuf,
+	char ** hostquad)
+{
+	char *	mark;
+	char *	ch;
+	int	i;
+
+	for (i=0, ch=hostbuf, mark=hostbuf; *ch && i<4; ch++) {
+		if (*ch == '-') {
+			*ch = 0;
+			hostquad[i++] = mark;
+			mark = &ch[1];
+		}
+	}
+
+	if (i<4)
+		hostquad[i] = mark;
+
+	if (i==3) {
+		hostquad[1] = hostquad[2];
+		hostquad[2] = hostquad[3];
+		hostquad[3] = 0;
+	}
+}
+
 static int slbt_init_host_params(
 	const struct slbt_common_ctx *	cctx,
 	struct slbt_host_strs *		drvhost,
@@ -373,7 +399,11 @@ static int slbt_init_host_params(
 	bool		fcompiler     = false;
 	bool		fnative       = false;
 	bool		fdumpmachine  = false;
-	char		buf[256];
+	char		buf        [256];
+	char		hostbuf    [256];
+	char		machinebuf [256];
+	char *		hostquad   [4];
+	char *		machinequad[4];
 
 	/* base */
 	if ((base = strrchr(cctx->cargv[0],'/')))
@@ -416,8 +446,21 @@ static int slbt_init_host_params(
 
 		host->host    = drvhost->host;
 		fcompiler     = true;
-		fnative       = (!(strcmp(host->host,drvhost->machine)));
+		fnative       = !strcmp(host->host,drvhost->machine);
 		cfgmeta->host = fnative ? cfgnmachine : cfgxmachine;
+
+		if (!fnative) {
+			strcpy(hostbuf,host->host);
+			strcpy(machinebuf,drvhost->machine);
+
+			slbt_get_host_quad(hostbuf,hostquad);
+			slbt_get_host_quad(machinebuf,machinequad);
+
+			if (hostquad[2] && machinequad[2])
+				fnative = !strcmp(hostquad[0],machinequad[0])
+					&& !strcmp(hostquad[1],machinequad[1])
+					&& !strcmp(hostquad[2],machinequad[2]);
+		}
 	} else {
 		host->host    = drvhost->machine;
 		cfgmeta->host = cfgnmachine;
