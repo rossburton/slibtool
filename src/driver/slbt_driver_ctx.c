@@ -508,6 +508,11 @@ static int slbt_init_host_params(
 			host->flavor   = "default";
 			cfgmeta->flavor = "fallback, unverified";
 		}
+
+		if (fcompiler && !fnative)
+			if ((mark = strstr(drvhost->machine,host->flavor)))
+				if (mark > drvhost->machine)
+					fnative = (*--mark == '-');
 	}
 
 	/* toollen */
