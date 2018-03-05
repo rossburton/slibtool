@@ -71,15 +71,6 @@ int  slbt_exec_compile(
 			*ectx->fpic = "-fPIC";
 		}
 
-		switch (dctx->cctx->tag) {
-			case SLBT_TAG_NASM:
-				break;
-
-			default:
-				*ectx->cass = "-c";
-				break;
-		}
-
 		*ectx->lout[0] = "-o";
 		*ectx->lout[1] = ectx->lobjname;
 
@@ -103,15 +94,6 @@ int  slbt_exec_compile(
 		if (dctx->cctx->drvflags & SLBT_DRIVER_PRO_PIC) {
 			*ectx->dpic = "-DPIC";
 			*ectx->fpic = "-fPIC";
-		}
-
-		switch (dctx->cctx->tag) {
-			case SLBT_TAG_NASM:
-				break;
-
-			default:
-				*ectx->cass = "-c";
-				break;
 		}
 
 		*ectx->lout[0] = "-o";
