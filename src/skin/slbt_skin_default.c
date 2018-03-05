@@ -161,6 +161,11 @@ const struct argv_option slbt_default_options[] = {
 				"Link the specified %s into the generated library "
 				"or executable"},
 
+	{"export-dynamic",	0,TAG_EXPORT_DYNAMIC,ARGV_OPTARG_NONE,
+				ARGV_OPTION_HYBRID_ONLY,0,0,
+				"allow symbols in the output file to be resolved via dlsym() "
+				"[currently a no-op]"},
+
 	{"export-symbols",	0,TAG_EXPSYM_FILE,ARGV_OPTARG_REQUIRED,
 				ARGV_OPTION_HYBRID_ONLY|ARGV_OPTION_HYBRID_SPACE,
 				0,"<symfile>",
