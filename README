@@ -68,7 +68,9 @@ script; two examples of such packages are `binutils` and `gdb`, which both
 have shared library builds disabled by default. A quick way to determine
 whether this invocation form is appropriate with a specific package is to
 run `./libtool --features` from the build directory, then check whether the
-output has either shared or static library builds disabled.
+output has either shared or static library builds disabled. When slibtool
+is invoked as a basic tool (i.e. slibtool, dlibtool, etc.), then building
+of both a shared library and a static archive is enabled by default.
 
 ## Differences from GNU libtool
 
