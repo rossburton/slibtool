@@ -644,6 +644,7 @@ static void slbt_init_flavor_settings(
 {
 	const struct slbt_host_params *     host;
 	const struct slbt_flavor_settings * settings;
+	const char *                        dot;
 
 	host = ahost ? ahost : &cctx->host;
 
@@ -670,7 +671,8 @@ static void slbt_init_flavor_settings(
 	memcpy(psettings,settings,sizeof(*settings));
 
 	if (cctx->shrext)
-		psettings->dsosuffix = cctx->shrext;
+		psettings->dsosuffix = (dot = strrchr(cctx->shrext,'.'))
+			? dot : cctx->shrext;
 }
 
 static int slbt_init_ldrpath(
