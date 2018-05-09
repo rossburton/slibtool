@@ -481,6 +481,9 @@ static int slbt_exec_link_adjust_argument_vector(
 		}
 	}
 
+	if (dctx->cctx->drvflags & SLBT_DRIVER_EXPORT_DYNAMIC)
+		*aarg++ = "-Wl,--export-dynamic";
+
 	return 0;
 }
 
