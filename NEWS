@@ -1,3 +1,14 @@
+0.5.19:
+
+This patch release includes several improvements in the driver logic,
+as well as one important fix to the compile mode logic.
+
+- driver: support -export-dynamic.
+- driver: allow flavor-based use of native tools (ar,ranlib,etc.)
+- driver: slbt_init_host_params(): improve native target detection logic.
+- driver: -shrext support: only use the extension portion of the extension.
+- compile mode: gnu libtool compatibility: do not add -c to compiler arguments.
+
 0.5.18:
 
 This patch release includes several important fixes to the link mode
