@@ -19,7 +19,7 @@ mb_default_shell=sh
 
 
 # switches
-mb_default_cflags_common="-std=c99 -D_XOPEN_SOURCE=700"
+mb_default_cflags_common="-std=c99 -D_XOPEN_SOURCE=500"
 mb_default_cflags_common="$mb_default_cflags_common -D_DEFAULT_SOURCE -D_BSD_SOURCE"
 mb_default_cflags_common="$mb_default_cflags_common -I\$(PROJECT_DIR)/src/internal"
 mb_default_cflags_common="$mb_default_cflags_common -I\$(PROJECT_DIR)/include"

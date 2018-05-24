@@ -45,7 +45,7 @@ effort, ease of customization, and long-term maintenance.
 - a C toolchain, consisting of
     - a C compiler such as gcc, clang, or [cparser];
     - the compiler should support -std=c99;
-    - the system's libc should support -D_XOPEN_SOURCE=700.
+    - the system's libc should support -D_XOPEN_SOURCE=500.
 
 ## Usage
 
