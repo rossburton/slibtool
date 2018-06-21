@@ -626,6 +626,7 @@ static int slbt_exec_link_create_dep_file(
 	char **	parg;
 	char *	popt;
 	char *	plib;
+	char *	path;
 	char *	mark;
 	char *	base;
 	size_t	size;
@@ -655,6 +656,7 @@ static int slbt_exec_link_create_dep_file(
 	for (parg=altv; *parg; parg++) {
 		popt = 0;
 		plib = 0;
+		path = 0;
 
 		if (!strcmp(*parg,"-l")) {
 			popt = *parg++;
@@ -668,6 +670,18 @@ static int slbt_exec_link_create_dep_file(
 		} else if (!strncmp(*parg,"--library=",10)) {
 			popt = *parg;
 			plib = popt + 10;
+		} else if (!strcmp(*parg,"-L")) {
+			popt = *parg++;
+			path = *parg;
+		} else if (!strcmp(*parg,"--library-path")) {
+			popt = *parg++;
+			path = *parg;
+		} else if (!strncmp(*parg,"-L",2)) {
+			popt = *parg;
+			path = popt + 2;
+		} else if (!strncmp(*parg,"--library-path=",15)) {
+			popt = *parg;
+			path = popt + 15;
 		} else if (!strncmp(*parg,"-f",2)) {
 			(void)0;
 		} else if ((popt = strrchr(*parg,'.')) && !strcmp(popt,".la")) {
@@ -803,6 +817,10 @@ static int slbt_exec_link_create_dep_file(
 
 		if (plib)
 			if (fprintf(ectx->fdeps,"-l%s\n",plib) < 0)
+				return SLBT_SYSTEM_ERROR(dctx);
+
+		if (path)
+			if (fprintf(ectx->fdeps,"-L%s\n",path) < 0)
 				return SLBT_SYSTEM_ERROR(dctx);
 	}
 
