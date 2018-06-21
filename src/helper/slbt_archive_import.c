@@ -14,6 +14,7 @@
 
 #include <slibtool/slibtool.h>
 #include "slibtool_spawn_impl.h"
+#include "slibtool_symlink_impl.h"
 #include "slibtool_readlink_impl.h"
 #include "slibtool_errinfo_impl.h"
 
@@ -89,9 +90,8 @@ int slbt_archive_import(
 	char	mrisrc [L_tmpnam];
 	char	program[PATH_MAX];
 
-	if (!slbt_readlink(srcarchive,program,sizeof(program)))
-		if (!(strcmp(program,"/dev/null")))
-			return 0;
+	if (slbt_symlink_is_a_placeholder(srcarchive))
+		return 0;
 
 	if ((size_t)snprintf(program,sizeof(program),"%s",
 			dctx->cctx->host.ar) >= sizeof(program))
