@@ -200,7 +200,6 @@ static int slbt_adjust_linker_argument(
 	char *	slash;
 	char *	dot;
 	char	base[PATH_MAX];
-	char	slnk[PATH_MAX];
 
 	if (*arg == '-')
 		return 0;
@@ -229,8 +228,7 @@ static int slbt_adjust_linker_argument(
 	if (fpic) {
 		sprintf(dot,"%s",dsosuffix);
 
-		if (!slbt_readlink(arg,slnk,sizeof(slnk))
-				&& !(strcmp(slnk,"/dev/null")))
+		if (slbt_symlink_is_a_placeholder(arg))
 			sprintf(dot,"%s",arsuffix);
 		else if ((fdlib = open(arg,O_RDONLY)) >= 0)
 			close(fdlib);

@@ -13,3 +13,5 @@ int slbt_create_symlink(
 	const char *			target,
 	const char *			lnkname,
 	bool				flawrapper);
+
+int slbt_symlink_is_a_placeholder(char * lnkpath);

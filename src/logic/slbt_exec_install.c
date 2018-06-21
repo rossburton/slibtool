@@ -424,6 +424,10 @@ static int slbt_exec_install_entry(
 
 	/* source (build) symlink target */
 	if (slbt_readlink(slnkname,target,sizeof(target)) < 0) {
+		/* -all-static? */
+		if (slbt_symlink_is_a_placeholder(slnkname))
+			return 0;
+
 		/* -avoid-version? */
 		if (stat(slnkname,&st))
 			return SLBT_SYSTEM_ERROR(dctx);
@@ -446,10 +450,6 @@ static int slbt_exec_install_entry(
 
 		return 0;
 	}
-
-	/* -all-static? */
-	if (!strcmp(target,"/dev/null"))
-		return 0;
 
 	/* srcfile: .libs/libfoo.so.x.y.z */
 	slash = strrchr(srcfile,'/');
