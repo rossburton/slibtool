@@ -1136,11 +1136,11 @@ int slbt_get_driver_ctx(
 					break;
 
 				case TAG_SHARED:
-					cctx.drvflags &= ~(uint64_t)SLBT_DRIVER_STATIC;
+					cctx.drvflags |= SLBT_DRIVER_DISABLE_STATIC;
 					break;
 
 				case TAG_STATIC:
-					cctx.drvflags &= ~(uint64_t)SLBT_DRIVER_SHARED;
+					cctx.drvflags |= SLBT_DRIVER_DISABLE_SHARED;
 					break;
 			}
 		}
