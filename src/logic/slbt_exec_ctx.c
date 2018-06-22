@@ -413,6 +413,28 @@ int  slbt_get_exec_ctx(
 		/* relfilename */
 		if (dctx->cctx->release) {
 			ictx->ctx.relfilename = ch;
+			ch += dctx->cctx->verinfo.verinfo
+				? sprintf(ch,"%s%s%s-%s%s.%d.%d.%d",
+					ictx->ctx.ldirname,
+					dsoprefix,
+					dctx->cctx->libname,
+					dctx->cctx->release,
+					dctx->cctx->settings.dsosuffix,
+					dctx->cctx->verinfo.major,
+					dctx->cctx->verinfo.minor,
+					dctx->cctx->verinfo.revision)
+				: sprintf(ch,"%s%s%s-%s%s",
+					ictx->ctx.ldirname,
+					dsoprefix,
+					dctx->cctx->libname,
+					dctx->cctx->release,
+					dctx->cctx->settings.dsosuffix);
+			ch++;
+		}
+
+		/* dsorellnkname */
+		if (dctx->cctx->release) {
+			ictx->ctx.dsorellnkname = ch;
 			ch += sprintf(ch,"%s%s%s-%s%s",
 					ictx->ctx.ldirname,
 					dsoprefix,

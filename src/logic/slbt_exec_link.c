@@ -1115,10 +1115,12 @@ static int slbt_exec_link_create_library(
 	/* -soname */
 	if ((dctx->cctx->drvflags & SLBT_DRIVER_IMAGE_MACHO)) {
 		(void)0;
-	} else if (!(dctx->cctx->drvflags & SLBT_DRIVER_AVOID_VERSION)) {
-		if ((size_t)snprintf(soname,sizeof(soname),"-Wl,%s%s%s.%d",
+
+	} else if (relfilename && dctx->cctx->verinfo.verinfo) {
+		if ((size_t)snprintf(soname,sizeof(soname),"-Wl,%s%s-%s%s.%d",
 					ectx->sonameprefix,
 					dctx->cctx->libname,
+					dctx->cctx->release,
 					dctx->cctx->settings.dsosuffix,
 					dctx->cctx->verinfo.major)
 				>= sizeof(soname))
@@ -1126,12 +1128,25 @@ static int slbt_exec_link_create_library(
 
 		*ectx->soname  = "-Wl,-soname";
 		*ectx->lsoname = soname;
+
 	} else if (relfilename) {
 		if ((size_t)snprintf(soname,sizeof(soname),"-Wl,%s%s-%s%s",
 					ectx->sonameprefix,
 					dctx->cctx->libname,
 					dctx->cctx->release,
 					dctx->cctx->settings.dsosuffix)
+				>= sizeof(soname))
+			return SLBT_BUFFER_ERROR(dctx);
+
+		*ectx->soname  = "-Wl,-soname";
+		*ectx->lsoname = soname;
+
+	} else if (!(dctx->cctx->drvflags & SLBT_DRIVER_AVOID_VERSION)) {
+		if ((size_t)snprintf(soname,sizeof(soname),"-Wl,%s%s%s.%d",
+					ectx->sonameprefix,
+					dctx->cctx->libname,
+					dctx->cctx->settings.dsosuffix,
+					dctx->cctx->verinfo.major)
 				>= sizeof(soname))
 			return SLBT_BUFFER_ERROR(dctx);
 
@@ -1412,20 +1427,29 @@ static int slbt_exec_link_create_library_symlink(
 				target,lnkname,
 				false))
 			return SLBT_NESTED_ERROR(dctx);
-	} else
+	} else {
 		sprintf(target,"%s.%d.%d.%d",
 			ectx->dsofilename,
 			dctx->cctx->verinfo.major,
 			dctx->cctx->verinfo.minor,
 			dctx->cctx->verinfo.revision);
+	}
 
-	if (fmajor)
+
+	if (fmajor && ectx->dsorellnkname) {
+		sprintf(lnkname,"%s.%d",
+			ectx->dsorellnkname,
+			dctx->cctx->verinfo.major);
+
+	} else if (fmajor) {
 		sprintf(lnkname,"%s.%d",
 			ectx->dsofilename,
 			dctx->cctx->verinfo.major);
 
-	else
+	} else {
 		strcpy(lnkname,ectx->dsofilename);
+	}
+
 
 	if (fmajor && (dctx->cctx->drvflags & SLBT_DRIVER_IMAGE_PE))
 		return slbt_copy_file(

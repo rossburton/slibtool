@@ -1074,7 +1074,6 @@ int slbt_get_driver_ctx(
 
 				case TAG_RELEASE:
 					cctx.release = entry->arg;
-					cctx.drvflags |= SLBT_DRIVER_AVOID_VERSION;
 					break;
 
 				case TAG_DLOPEN:
