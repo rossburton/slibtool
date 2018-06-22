@@ -6,6 +6,7 @@
 
 #include <slibtool/slibtool.h>
 #include "slibtool_spawn_impl.h"
+#include "slibtool_symlink_impl.h"
 #include "slibtool_errinfo_impl.h"
 
 int slbt_copy_file(
@@ -18,6 +19,10 @@ int slbt_copy_file(
 	char *	oprogram;
 	char *	cp[4];
 	int	ret;
+
+	/* placeholder? */
+	if (slbt_symlink_is_a_placeholder(src))
+		return 0;
 
 	/* cp argv */
 	cp[0] = "cp";
