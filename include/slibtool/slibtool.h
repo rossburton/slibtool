@@ -283,6 +283,7 @@ slbt_api int  slbt_dump_machine		(const char * compiler, char * machine, size_t 
 /* utility api */
 slbt_api int  slbt_main			(int, char **, char **);
 slbt_api int  slbt_output_config	(const struct slbt_driver_ctx *);
+slbt_api int  slbt_output_features	(const struct slbt_driver_ctx *);
 slbt_api int  slbt_output_exec		(const struct slbt_driver_ctx *, const struct slbt_exec_ctx *, const char *);
 slbt_api int  slbt_output_compile	(const struct slbt_driver_ctx *, const struct slbt_exec_ctx *);
 slbt_api int  slbt_output_execute	(const struct slbt_driver_ctx *, const struct slbt_exec_ctx *);

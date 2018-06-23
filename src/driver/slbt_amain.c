@@ -56,6 +56,9 @@ static void slbt_perform_driver_actions(struct slbt_driver_ctx * dctx)
 	if (dctx->cctx->drvflags & SLBT_DRIVER_CONFIG)
 		slbt_output_config(dctx);
 
+	if (dctx->cctx->drvflags & SLBT_DRIVER_FEATURES)
+		slbt_output_features(dctx);
+
 	if (dctx->cctx->mode == SLBT_MODE_COMPILE)
 		slbt_exec_compile(dctx,0);
 

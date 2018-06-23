@@ -13,6 +13,7 @@ API_SRCS = \
 	src/output/slbt_output_config.c \
 	src/output/slbt_output_error.c \
 	src/output/slbt_output_exec.c \
+	src/output/slbt_output_features.c \
 	src/skin/slbt_skin_default.c \
 	src/skin/slbt_skin_install.c \
 	src/skin/slbt_skin_uninstall.c \

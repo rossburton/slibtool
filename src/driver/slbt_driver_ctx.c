@@ -45,6 +45,10 @@ static const char cfgnmachine[] = "native (derived from -dumpmachine)";
 static const char cfgxmachine[] = "foreign (derived from -dumpmachine)";
 static const char cfgnative[]   = "native";
 
+
+/* default compiler argv */
+static char * slbt_default_cargv[] = {"cc",0};
+
 /* elf rpath */
 static const char*ldrpath_elf[] = {
 	"/lib",
@@ -191,6 +195,7 @@ static int slbt_split_argv(
 	struct argv_entry *		mode;
 	struct argv_entry *		config;
 	struct argv_entry *		finish;
+	struct argv_entry *		features;
 	const struct argv_option **	popt;
 	const struct argv_option **	optout;
 	const struct argv_option *	optv[SLBT_OPTV_ELEMENTS];
@@ -219,24 +224,32 @@ static int slbt_split_argv(
 	}
 
 	/* obtain slibtool's own arguments */
-	compiler = argv[ctx.unitidx];
-	argv[ctx.unitidx] = 0;
+	if (ctx.unitidx) {
+		compiler = argv[ctx.unitidx];
+		argv[ctx.unitidx] = 0;
 
-	meta = argv_get(argv,optv,ARGV_VERBOSITY_NONE);
-	argv[ctx.unitidx] = compiler;
+		meta = argv_get(argv,optv,ARGV_VERBOSITY_NONE);
+		argv[ctx.unitidx] = compiler;
+	} else {
+		meta = argv_get(argv,optv,ARGV_VERBOSITY_NONE);
+	}
 
-	/* missing all of --mode, --config, and --finish? */
-	for (mode=0, config=0, finish=0, entry=meta->entries; entry->fopt; entry++)
+	/* missing all of --mode, --config, --features, and --finish? */
+	mode = config = finish = features = 0;
+
+	for (entry=meta->entries; entry->fopt; entry++)
 		if (entry->tag == TAG_MODE)
 			mode = entry;
 		else if (entry->tag == TAG_CONFIG)
 			config = entry;
 		else if (entry->tag == TAG_FINISH)
 			finish = entry;
+		else if (entry->tag == TAG_FEATURES)
+			features = entry;
 
 	argv_free(meta);
 
-	if (!mode && !config && !finish) {
+	if (!mode && !config && !finish && !features) {
 		fprintf(stderr,
 			"%s: error: --mode must be specified.\n",
 			program);
@@ -244,7 +257,7 @@ static int slbt_split_argv(
 	}
 
 	/* missing compiler? */
-	if (!ctx.unitidx && !finish) {
+	if (!ctx.unitidx && !finish && !features) {
 		if (flags & SLBT_DRIVER_VERBOSITY_ERRORS)
 			fprintf(stderr,
 				"%s: error: <compiler> is missing.\n",
@@ -260,6 +273,16 @@ static int slbt_split_argv(
 		sargv->cargv = sargv->targv + argc + 1;
 	else
 		return -1;
+
+	/* --features and no <compiler>? */
+	if (features && !ctx.unitidx) {
+		for (i=0; i<argc; i++)
+			sargv->targv[i] = argv[i];
+
+		sargv->cargv = slbt_default_cargv;
+
+		return 0;
+	}
 
 	/* split vectors: slibtool's own options */
 	for (i=0; i<ctx.unitidx; i++)
