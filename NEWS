@@ -1,3 +1,15 @@
+0.5.20:
+
+This patch release includes several important bug fixes pertaining to both
+the link and compile mode, as well as the addition of a compatible --features
+output.
+
+- driver: added slbt_output_features(), providing compatible --features output.
+- driver: compatibility: have -{shared|static} imply -disable-{static|shared}.
+- link mode: properly handle the combination of -release and -version-info.
+- link mode: slbt_exec_link_create_dep_file(): record top-level -L arguments.
+- link mode: --disable-{shared|static}: use differently-named placeholders.
+
 0.5.19:
 
 This patch release includes several improvements in the driver logic,
