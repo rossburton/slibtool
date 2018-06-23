@@ -414,8 +414,9 @@ static int slbt_init_host_params(
 	else
 		base = cctx->cargv[0];
 
-	if ((cctx->mode == SLBT_MODE_COMPILE) || (cctx->mode == SLBT_MODE_LINK))
-		fdumpmachine = true;
+	fdumpmachine =  (cctx->mode == SLBT_MODE_COMPILE)
+			|| (cctx->mode == SLBT_MODE_LINK)
+			|| (cctx->mode == SLBT_MODE_INFO);
 
 	/* support the portbld <--> unknown synonym */
 	if (!(drvhost->machine = strdup(SLBT_MACHINE)))
@@ -1164,6 +1165,10 @@ int slbt_get_driver_ctx(
 		cctx.output = 0;
 	}
 
+	/* info mode */
+	if (cctx.drvflags & (SLBT_DRIVER_CONFIG | SLBT_DRIVER_FEATURES))
+		cctx.mode = SLBT_MODE_INFO;
+
 	/* driver context */
 	if (!(ctx = slbt_driver_ctx_alloc(meta,&cctx)))
 		return slbt_get_driver_ctx_fail(meta);
@@ -1177,9 +1182,10 @@ int slbt_get_driver_ctx(
 	ctx->cctx.cargv		= sargv.cargv;
 
 	/* host params */
-	if ((cctx.drvflags & SLBT_DRIVER_HEURISTICS)
-			|| (cctx.drvflags & SLBT_DRIVER_CONFIG)
-			|| (cctx.mode != SLBT_MODE_COMPILE)) {
+	if (cctx.mode == SLBT_MODE_COMPILE) {
+		(void)0;
+
+	} else {
 		if (slbt_init_host_params(
 				&ctx->cctx,
 				&ctx->host,
@@ -1187,10 +1193,11 @@ int slbt_get_driver_ctx(
 				&ctx->cctx.cfgmeta)) {
 			slbt_free_driver_ctx(&ctx->ctx);
 			return -1;
-		} else
-			slbt_init_flavor_settings(
-				&ctx->cctx,0,
-				&ctx->cctx.settings);
+		}
+
+		slbt_init_flavor_settings(
+			&ctx->cctx,0,
+			&ctx->cctx.settings);
 	}
 
 	/* ldpath */

@@ -92,6 +92,7 @@ enum slbt_custom_error {
 /* execution modes */
 enum slbt_mode {
 	SLBT_MODE_UNKNOWN,
+	SLBT_MODE_INFO,
 	SLBT_MODE_CLEAN,
 	SLBT_MODE_COMPILE,
 	SLBT_MODE_EXECUTE,
