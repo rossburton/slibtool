@@ -122,11 +122,6 @@ struct slbt_source_version {
 	const char *	commit;
 };
 
-struct slbt_input {
-	void *	addr;
-	size_t	size;
-};
-
 struct slbt_exec_ctx {
 	char *	program;
 	char *	compiler;
