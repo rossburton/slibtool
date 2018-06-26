@@ -6,6 +6,7 @@
 #include <sys/types.h>
 
 #include <slibtool/slibtool.h>
+#include "slibtool_dprintf_impl.h"
 #include "argv/argv.h"
 
 #define SLBT_OPTV_ELEMENTS 64
