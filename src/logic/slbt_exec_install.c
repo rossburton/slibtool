@@ -35,7 +35,7 @@ static int slbt_install_usage(
 		"Options:\n",
 		program);
 
-	argv_usage(stdout,header,optv,arg);
+	argv_usage(STDOUT_FILENO,header,optv,arg);
 	argv_free(meta);
 
 	return SLBT_USAGE;
@@ -582,7 +582,8 @@ int slbt_exec_install(
 			optv,
 			dctx->cctx->drvflags & SLBT_DRIVER_VERBOSITY_ERRORS
 				? ARGV_VERBOSITY_ERRORS
-				: ARGV_VERBOSITY_NONE)))
+				: ARGV_VERBOSITY_NONE,
+			STDERR_FILENO)))
 		return slbt_exec_install_fail(
 			actx,meta,
 			SLBT_CUSTOM_ERROR(dctx,SLBT_ERR_INSTALL_FAIL));

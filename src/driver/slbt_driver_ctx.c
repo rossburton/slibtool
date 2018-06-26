@@ -141,7 +141,7 @@ static int slbt_driver_usage(
 		"Usage: %s [options] <file>...\n" "Options:\n",
 		program);
 
-	argv_usage(stdout,header,optv,arg);
+	argv_usage(STDOUT_FILENO,header,optv,arg);
 	argv_free(meta);
 
 	return SLBT_USAGE;
@@ -219,7 +219,8 @@ static int slbt_split_argv(
 		if (flags & SLBT_DRIVER_VERBOSITY_ERRORS)
 			argv_get(
 				argv,optv,
-				slbt_argv_flags(flags));
+				slbt_argv_flags(flags),
+				STDERR_FILENO);
 		return -1;
 	}
 
@@ -228,10 +229,10 @@ static int slbt_split_argv(
 		compiler = argv[ctx.unitidx];
 		argv[ctx.unitidx] = 0;
 
-		meta = argv_get(argv,optv,ARGV_VERBOSITY_NONE);
+		meta = argv_get(argv,optv,ARGV_VERBOSITY_NONE,STDERR_FILENO);
 		argv[ctx.unitidx] = compiler;
 	} else {
-		meta = argv_get(argv,optv,ARGV_VERBOSITY_NONE);
+		meta = argv_get(argv,optv,ARGV_VERBOSITY_NONE,STDERR_FILENO);
 	}
 
 	/* missing all of --mode, --config, --features, and --finish? */
@@ -910,7 +911,10 @@ int slbt_get_driver_ctx(
 	if (slbt_split_argv(argv,flags,&sargv))
 		return -1;
 
-	if (!(meta = argv_get(sargv.targv,optv,slbt_argv_flags(flags))))
+	if (!(meta = argv_get(
+			sargv.targv,optv,
+			slbt_argv_flags(flags),
+			STDERR_FILENO)))
 		return -1;
 
 	program = argv_program_name(argv[0]);
@@ -1257,7 +1261,7 @@ int slbt_create_driver_ctx(
 
 	argv_optv_init(slbt_default_options,optv);
 
-	if (!(meta = argv_get(argv,optv,0)))
+	if (!(meta = argv_get(argv,optv,0,STDERR_FILENO)))
 		return -1;
 
 	if (!(ctx = slbt_driver_ctx_alloc(meta,cctx)))

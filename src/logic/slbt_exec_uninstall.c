@@ -33,7 +33,7 @@ static int slbt_uninstall_usage(
 		"Options:\n",
 		program);
 
-	argv_usage(stdout,header,optv,arg);
+	argv_usage(STDOUT_FILENO,header,optv,arg);
 	argv_free(meta);
 
 	return SLBT_USAGE;
@@ -286,7 +286,8 @@ int slbt_exec_uninstall(
 			optv,
 			dctx->cctx->drvflags & SLBT_DRIVER_VERBOSITY_ERRORS
 				? ARGV_VERBOSITY_ERRORS
-				: ARGV_VERBOSITY_NONE)))
+				: ARGV_VERBOSITY_NONE,
+			STDERR_FILENO)))
 		return slbt_exec_uninstall_fail(
 			actx,meta,
 			SLBT_CUSTOM_ERROR(dctx,SLBT_ERR_UNINSTALL_FAIL));
