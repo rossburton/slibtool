@@ -1,5 +1,5 @@
-#ifndef SOFORT_DRIVER_IMPL_H
-#define SOFORT_DRIVER_IMPL_H
+#ifndef SLIBTOOL_DRIVER_IMPL_H
+#define SLIBTOOL_DRIVER_IMPL_H
 
 #include <stdint.h>
 #include <stdio.h>
