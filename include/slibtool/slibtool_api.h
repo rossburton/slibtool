@@ -1,5 +1,5 @@
-#ifndef SOFORT_API_H
-#define SOFORT_API_H
+#ifndef SLIBTOOL_API_H
+#define SLIBTOOL_API_H
 
 #include <limits.h>
 

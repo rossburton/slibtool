@@ -1,5 +1,5 @@
-#ifndef SOFORT_H
-#define SOFORT_H
+#ifndef SLIBTOOL_H
+#define SLIBTOOL_H
 
 #include <stdint.h>
 #include <stddef.h>
