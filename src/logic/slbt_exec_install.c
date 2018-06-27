@@ -23,6 +23,7 @@
 #include "argv/argv.h"
 
 static int slbt_install_usage(
+	int				fdout,
 	const char *			program,
 	const char *			arg,
 	const struct argv_option **	optv,
@@ -35,7 +36,7 @@ static int slbt_install_usage(
 		"Options:\n",
 		program);
 
-	argv_usage(STDOUT_FILENO,header,optv,arg);
+	argv_usage(fdout,header,optv,arg);
 	argv_free(meta);
 
 	return SLBT_USAGE;
@@ -536,6 +537,7 @@ int slbt_exec_install(
 	struct slbt_exec_ctx *		ectx)
 {
 	int				ret;
+	int				fdout;
 	char **				argv;
 	char **				iargv;
 	char **				src;
@@ -565,6 +567,7 @@ int slbt_exec_install(
 	slbt_reset_arguments(ectx);
 	slbt_disable_placeholders(ectx);
 	iargv = ectx->cargv;
+	fdout = slbt_driver_fdout(dctx);
 
 	/* work around non-conforming uses of --mode=install */
 	if (!(strcmp(iargv[0],"/bin/sh")) || !strcmp(iargv[0],"/bin/bash"))
@@ -574,16 +577,18 @@ int slbt_exec_install(
 	argv_optv_init(slbt_install_options,optv);
 
 	if (!iargv[1] && (dctx->cctx->drvflags & SLBT_DRIVER_VERBOSITY_USAGE))
-		return slbt_install_usage(dctx->program,0,optv,0);
+		return slbt_install_usage(
+			fdout,
+			dctx->program,
+			0,optv,0);
 
 	/* <install> argv meta */
 	if (!(meta = argv_get(
-			iargv,
-			optv,
+			iargv,optv,
 			dctx->cctx->drvflags & SLBT_DRIVER_VERBOSITY_ERRORS
 				? ARGV_VERBOSITY_ERRORS
 				: ARGV_VERBOSITY_NONE,
-			STDERR_FILENO)))
+			fdout)))
 		return slbt_exec_install_fail(
 			actx,meta,
 			SLBT_CUSTOM_ERROR(dctx,SLBT_ERR_INSTALL_FAIL));

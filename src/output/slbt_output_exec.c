@@ -7,6 +7,9 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <slibtool/slibtool.h>
+
+#include "slibtool_driver_impl.h"
+#include "slibtool_dprintf_impl.h"
 #include "slibtool_errinfo_impl.h"
 
 static const char aclr_null[]    = "";
@@ -22,12 +25,16 @@ static int slbt_output_exec_annotated(
 	const struct slbt_exec_ctx *	ectx,
 	const char *			step)
 {
+	int          fdout;
 	char **      parg;
 	const char * aclr_set;
 	const char * aclr_color;
 	const char * aclr_unset;
 
-	if (fprintf(stdout,"%s%s%s: %s%s%s%s:%s",
+	fdout = slbt_driver_fdout(dctx);
+
+	if (slbt_dprintf(
+			fdout,"%s%s%s: %s%s%s%s:%s",
 			aclr_bold,aclr_magenta,
 			dctx->program,aclr_reset,
 			aclr_bold,aclr_green,step,aclr_reset) < 0)
@@ -44,7 +51,8 @@ static int slbt_output_exec_annotated(
 			aclr_unset    = aclr_reset;
 		}
 
-		if (fprintf(stdout," %s%s%s%s",
+		if (slbt_dprintf(
+				fdout," %s%s%s%s",
 				aclr_set,aclr_color,
 				*parg,
 				aclr_unset) < 0)
@@ -52,10 +60,10 @@ static int slbt_output_exec_annotated(
 
 	}
 
-	if (fputc('\n',stdout) < 0)
+	if (slbt_dprintf(fdout,"\n") < 0)
 		return SLBT_SYSTEM_ERROR(dctx);
 
-	return fflush(stdout);
+	return 0;
 }
 
 static int slbt_output_exec_plain(
@@ -63,21 +71,22 @@ static int slbt_output_exec_plain(
 	const struct slbt_exec_ctx *	ectx,
 	const char *		step)
 {
+	int	fdout;
 	char ** parg;
 
-	if (fprintf(stdout,"%s: %s:",dctx->program,step) < 0)
+	fdout = slbt_driver_fdout(dctx);
+
+	if (slbt_dprintf(fdout,"%s: %s:",dctx->program,step) < 0)
 		return SLBT_SYSTEM_ERROR(dctx);
 
 	for (parg=ectx->argv; *parg; parg++)
-		if (fprintf(stdout," %s",*parg) < 0)
+		if (slbt_dprintf(fdout," %s",*parg) < 0)
 			return SLBT_SYSTEM_ERROR(dctx);
 
-	if (fputc('\n',stdout) < 0)
+	if (slbt_dprintf(fdout,"\n") < 0)
 		return SLBT_SYSTEM_ERROR(dctx);
 
-	return fflush(stdout)
-		? SLBT_SYSTEM_ERROR(dctx)
-		: 0;
+	return 0;
 }
 
 int slbt_output_exec(
@@ -85,13 +94,15 @@ int slbt_output_exec(
 	const struct slbt_exec_ctx *	ectx,
 	const char *			step)
 {
+	int fdout = slbt_driver_fdout(dctx);
+
 	if (dctx->cctx->drvflags & SLBT_DRIVER_ANNOTATE_NEVER)
 		return slbt_output_exec_plain(dctx,ectx,step);
 
 	else if (dctx->cctx->drvflags & SLBT_DRIVER_ANNOTATE_ALWAYS)
 		return slbt_output_exec_annotated(dctx,ectx,step);
 
-	else if (isatty(STDOUT_FILENO))
+	else if (isatty(fdout))
 		return slbt_output_exec_annotated(dctx,ectx,step);
 
 	else

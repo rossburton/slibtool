@@ -83,6 +83,7 @@ struct slbt_driver_ctx_impl {
 	struct slbt_driver_ctx	ctx;
 	struct slbt_host_strs	host;
 	struct slbt_host_strs	ahost;
+	struct slbt_fd_ctx	fdctx;
 	char *			libname;
 	char **			targv;
 	char **			cargv;
@@ -102,6 +103,34 @@ static inline struct slbt_driver_ctx_impl * slbt_get_driver_ictx(const struct sl
 	}
 
 	return 0;
+}
+
+static inline int slbt_driver_fdin(const struct slbt_driver_ctx * dctx)
+{
+	struct slbt_fd_ctx fdctx;
+	slbt_get_driver_fdctx(dctx,&fdctx);
+	return fdctx.fdin;
+}
+
+static inline int slbt_driver_fdout(const struct slbt_driver_ctx * dctx)
+{
+	struct slbt_fd_ctx fdctx;
+	slbt_get_driver_fdctx(dctx,&fdctx);
+	return fdctx.fdout;
+}
+
+static inline int slbt_driver_fderr(const struct slbt_driver_ctx * dctx)
+{
+	struct slbt_fd_ctx fdctx;
+	slbt_get_driver_fdctx(dctx,&fdctx);
+	return fdctx.fderr;
+}
+
+static inline int slbt_driver_fdlog(const struct slbt_driver_ctx * dctx)
+{
+	struct slbt_fd_ctx fdctx;
+	slbt_get_driver_fdctx(dctx,&fdctx);
+	return fdctx.fdlog;
 }
 
 #endif

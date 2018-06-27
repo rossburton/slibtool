@@ -10,6 +10,7 @@
 #include <errno.h>
 #include <slibtool/slibtool.h>
 #include "slibtool_driver_impl.h"
+#include "slibtool_dprintf_impl.h"
 
 #ifndef SLBT_DRIVER_FLAGS
 #define SLBT_DRIVER_FLAGS	SLBT_DRIVER_VERBOSITY_ERRORS \
@@ -32,17 +33,17 @@ static const char * const slbt_ver_plain[6] = {
 		"",""
 };
 
-static ssize_t slbt_version(struct slbt_driver_ctx * dctx)
+static ssize_t slbt_version(int fdout, struct slbt_driver_ctx * dctx)
 {
 	const struct slbt_source_version * verinfo;
 	const char * const * verclr;
 	bool gitver;
 
 	verinfo = slbt_source_version();
-	verclr  = isatty(STDOUT_FILENO) ? slbt_ver_color : slbt_ver_plain;
+	verclr  = isatty(fdout) ? slbt_ver_color : slbt_ver_plain;
 	gitver  = strcmp(verinfo->commit,"unknown");
 
-	return fprintf(stdout,vermsg,
+	return slbt_dprintf(fdout,vermsg,
 			verclr[0],dctx->program,verclr[1],
 			verclr[2],verinfo->major,verinfo->minor,
 			verinfo->revision,verclr[3],
@@ -82,14 +83,19 @@ static int slbt_exit(struct slbt_driver_ctx * dctx, int ret)
 	return ret;
 }
 
-int slbt_main(int argc, char ** argv, char ** envp)
+int slbt_main(int argc, char ** argv, char ** envp,
+              const struct slbt_fd_ctx * fdctx)
 {
 	int				ret;
+	int				fdout;
 	uint64_t			flags;
 	struct slbt_driver_ctx *	dctx;
 	char *				program;
 	char *				dash;
 	char *				sargv[5];
+
+	flags = SLBT_DRIVER_FLAGS;
+	fdout = fdctx ? fdctx->fdout : STDOUT_FILENO;
 
 	/* --version only? */
 	if ((argc == 2) && (!strcmp(argv[1],"--version")
@@ -102,8 +108,8 @@ int slbt_main(int argc, char ** argv, char ** envp)
 		sargv[3] = "<compiler>";
 		sargv[4] = 0;
 
-		return (slbt_get_driver_ctx(sargv,envp,SLBT_DRIVER_FLAGS,&dctx))
-			? SLBT_ERROR : (slbt_version(dctx) < 0)
+		return (slbt_get_driver_ctx(sargv,envp,flags,fdctx,&dctx))
+			? SLBT_ERROR : (slbt_version(fdout,dctx) < 0)
 				? slbt_exit(dctx,SLBT_ERROR)
 				: slbt_exit(dctx,SLBT_OK);
 	}
@@ -128,9 +134,6 @@ int slbt_main(int argc, char ** argv, char ** envp)
 	else if (!(strcmp(dash,"static")))
 		flags = SLBT_DRIVER_FLAGS | SLBT_DRIVER_DISABLE_SHARED;
 
-	else
-		flags = SLBT_DRIVER_FLAGS;
-
 	/* debug */
 	if (!(strcmp(program,"dlibtool")))
 		flags |= SLBT_DRIVER_DEBUG;
@@ -148,13 +151,13 @@ int slbt_main(int argc, char ** argv, char ** envp)
 			flags |= SLBT_DRIVER_LEGABITS;
 
 	/* driver context */
-	if ((ret = slbt_get_driver_ctx(argv,envp,flags,&dctx)))
+	if ((ret = slbt_get_driver_ctx(argv,envp,flags,fdctx,&dctx)))
 		return (ret == SLBT_USAGE)
 			? !--argc
 			: SLBT_ERROR;
 
 	if (dctx->cctx->drvflags & SLBT_DRIVER_VERSION)
-		if ((slbt_version(dctx)) < 0)
+		if ((slbt_version(fdout,dctx)) < 0)
 			return slbt_exit(dctx,SLBT_ERROR);
 
 	slbt_perform_driver_actions(dctx);

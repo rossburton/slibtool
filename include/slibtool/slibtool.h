@@ -122,6 +122,13 @@ struct slbt_source_version {
 	const char *	commit;
 };
 
+struct slbt_fd_ctx {
+	int	fdin;
+	int	fdout;
+	int	fderr;
+	int	fdlog;
+};
+
 struct slbt_exec_ctx {
 	char *	program;
 	char *	compiler;
@@ -247,9 +254,14 @@ struct slbt_driver_ctx {
 slbt_api				const struct slbt_source_version * slbt_source_version(void);
 
 /* driver api */
-slbt_api int  slbt_get_driver_ctx	(char ** argv, char ** envp, uint32_t flags, struct slbt_driver_ctx **);
-slbt_api int  slbt_create_driver_ctx	(const struct slbt_common_ctx *, struct slbt_driver_ctx **);
+slbt_api int  slbt_get_driver_ctx	(char ** argv, char ** envp, uint32_t flags,
+                                         const struct slbt_fd_ctx *, struct slbt_driver_ctx **);
+slbt_api int  slbt_create_driver_ctx	(const struct slbt_common_ctx *,
+                                         const struct slbt_fd_ctx *, struct slbt_driver_ctx **);
 slbt_api void slbt_free_driver_ctx	(struct slbt_driver_ctx *);
+
+slbt_api int  slbt_get_driver_fdctx	(const struct slbt_driver_ctx *, struct slbt_fd_ctx *);
+slbt_api int  slbt_set_driver_fdctx	(struct slbt_driver_ctx *, const struct slbt_fd_ctx *);
 
 /* execution context api */
 slbt_api int  slbt_get_exec_ctx		(const struct slbt_driver_ctx *, struct slbt_exec_ctx **);
@@ -276,7 +288,8 @@ slbt_api int  slbt_copy_file		(const struct slbt_driver_ctx *, struct slbt_exec_
 slbt_api int  slbt_dump_machine		(const char * compiler, char * machine, size_t bufsize);
 
 /* utility api */
-slbt_api int  slbt_main			(int, char **, char **);
+slbt_api int  slbt_main			(int, char **, char **,
+                                         const struct slbt_fd_ctx *);
 slbt_api int  slbt_output_config	(const struct slbt_driver_ctx *);
 slbt_api int  slbt_output_features	(const struct slbt_driver_ctx *);
 slbt_api int  slbt_output_exec		(const struct slbt_driver_ctx *, const struct slbt_exec_ctx *, const char *);

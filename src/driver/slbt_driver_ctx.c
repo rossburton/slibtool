@@ -79,7 +79,7 @@ struct slbt_driver_ctx_alloc {
 	uint64_t			guard;
 };
 
-static void slbt_output_raw_vector(char ** argv, char ** envp)
+static void slbt_output_raw_vector(int fderr, char ** argv, char ** envp)
 {
 	char **		parg;
 	char *		dot;
@@ -88,10 +88,10 @@ static void slbt_output_raw_vector(char ** argv, char ** envp)
 
 	(void)envp;
 
-	if ((fcolor = isatty(STDERR_FILENO)))
-		fprintf(stderr,"%s%s",aclr_bold,aclr_red);
+	if ((fcolor = isatty(fderr)))
+		slbt_dprintf(fderr,"%s%s",aclr_bold,aclr_red);
 
-	fprintf(stderr,"\n\n\n%s",argv[0]);
+	slbt_dprintf(fderr,"\n\n\n%s",argv[0]);
 
 	for (parg=&argv[1]; *parg; parg++) {
 		if (!fcolor)
@@ -107,10 +107,10 @@ static void slbt_output_raw_vector(char ** argv, char ** envp)
 		else
 			color = aclr_white;
 
-		fprintf(stderr," %s%s",color,*parg);
+		slbt_dprintf(fderr," %s%s",color,*parg);
 	}
 
-	fprintf(stderr,"%s\n\n",fcolor ? aclr_reset : "");
+	slbt_dprintf(fderr,"%s\n\n",fcolor ? aclr_reset : "");
 }
 
 static uint32_t slbt_argv_flags(uint32_t flags)
@@ -130,6 +130,7 @@ static uint32_t slbt_argv_flags(uint32_t flags)
 }
 
 static int slbt_driver_usage(
+	int				fdout,
 	const char *			program,
 	const char *			arg,
 	const struct argv_option **	optv,
@@ -141,7 +142,7 @@ static int slbt_driver_usage(
 		"Usage: %s [options] <file>...\n" "Options:\n",
 		program);
 
-	argv_usage(STDOUT_FILENO,header,optv,arg);
+	argv_usage(fdout,header,optv,arg);
 	argv_free(meta);
 
 	return SLBT_USAGE;
@@ -149,6 +150,7 @@ static int slbt_driver_usage(
 
 static struct slbt_driver_ctx_impl * slbt_driver_ctx_alloc(
 	struct argv_meta *		meta,
+	const struct slbt_fd_ctx *	fdctx,
 	const struct slbt_common_ctx *	cctx)
 {
 	struct slbt_driver_ctx_alloc *	ictx;
@@ -160,8 +162,8 @@ static struct slbt_driver_ctx_impl * slbt_driver_ctx_alloc(
 	if (!(ictx = calloc(1,size)))
 		return 0;
 
-	if (cctx)
-		memcpy(&ictx->ctx.cctx,cctx,sizeof(*cctx));
+	memcpy(&ictx->ctx.fdctx,fdctx,sizeof(*fdctx));
+	memcpy(&ictx->ctx.cctx,cctx,sizeof(*cctx));
 
 	elements = sizeof(ictx->ctx.erribuf) / sizeof(*ictx->ctx.erribuf);
 
@@ -182,7 +184,8 @@ static int slbt_get_driver_ctx_fail(struct argv_meta * meta)
 static int slbt_split_argv(
 	char **				argv,
 	uint32_t			flags,
-	struct slbt_split_vector *	sargv)
+	struct slbt_split_vector *	sargv,
+	int				fderr)
 {
 	int				i;
 	int				argc;
@@ -209,7 +212,9 @@ static int slbt_split_argv(
 	argv_optv_init(slbt_default_options,optv);
 
 	if (!argv[1] && (flags & SLBT_DRIVER_VERBOSITY_USAGE))
-		return slbt_driver_usage(program,0,optv,0);
+		return slbt_driver_usage(
+			fderr,program,
+			0,optv,0);
 
 	/* initial argv scan: ... --mode=xxx ... <compiler> ... */
 	argv_scan(argv,optv,&ctx,0);
@@ -220,7 +225,7 @@ static int slbt_split_argv(
 			argv_get(
 				argv,optv,
 				slbt_argv_flags(flags),
-				STDERR_FILENO);
+				fderr);
 		return -1;
 	}
 
@@ -229,10 +234,10 @@ static int slbt_split_argv(
 		compiler = argv[ctx.unitidx];
 		argv[ctx.unitidx] = 0;
 
-		meta = argv_get(argv,optv,ARGV_VERBOSITY_NONE,STDERR_FILENO);
+		meta = argv_get(argv,optv,ARGV_VERBOSITY_NONE,fderr);
 		argv[ctx.unitidx] = compiler;
 	} else {
-		meta = argv_get(argv,optv,ARGV_VERBOSITY_NONE,STDERR_FILENO);
+		meta = argv_get(argv,optv,ARGV_VERBOSITY_NONE,fderr);
 	}
 
 	/* missing all of --mode, --config, --features, and --finish? */
@@ -251,7 +256,7 @@ static int slbt_split_argv(
 	argv_free(meta);
 
 	if (!mode && !config && !finish && !features) {
-		fprintf(stderr,
+		slbt_dprintf(fderr,
 			"%s: error: --mode must be specified.\n",
 			program);
 		return -1;
@@ -260,7 +265,7 @@ static int slbt_split_argv(
 	/* missing compiler? */
 	if (!ctx.unitidx && !finish && !features) {
 		if (flags & SLBT_DRIVER_VERBOSITY_ERRORS)
-			fprintf(stderr,
+			slbt_dprintf(fderr,
 				"%s: error: <compiler> is missing.\n",
 				program);
 		return -1;
@@ -773,7 +778,7 @@ static int slbt_init_version_info(
 
 	if (current < age) {
 		if (ictx->cctx.drvflags & SLBT_DRIVER_VERBOSITY_ERRORS)
-			fprintf(stderr,
+			slbt_dprintf(ictx->fdctx.fderr,
 				"%s: error: invalid version info: "
 				"<current> may not be smaller than <age>.\n",
 				argv_program_name(ictx->cctx.targv[0]));
@@ -795,7 +800,9 @@ static int slbt_init_link_params(struct slbt_driver_ctx_impl * ctx)
 	const char * base;
 	char *       dot;
 	bool         fmodule;
+	int          fderr;
 
+	fderr   = ctx->fdctx.fderr;
 	program = argv_program_name(ctx->cctx.targv[0]);
 	libname = 0;
 	prefix  = 0;
@@ -804,7 +811,7 @@ static int slbt_init_link_params(struct slbt_driver_ctx_impl * ctx)
 	/* output */
 	if (!(ctx->cctx.output)) {
 		if (ctx->cctx.drvflags & SLBT_DRIVER_VERBOSITY_ERRORS)
-			fprintf(stderr,
+			slbt_dprintf(fderr,
 				"%s: error: output file must be "
 				"specified in link mode.\n",
 				program);
@@ -829,7 +836,7 @@ static int slbt_init_link_params(struct slbt_driver_ctx_impl * ctx)
 			libname = base;
 		else {
 			if (ctx->cctx.drvflags & SLBT_DRIVER_VERBOSITY_ERRORS)
-				fprintf(stderr,
+				slbt_dprintf(fderr,
 					"%s: error: output file prefix does "
 					"not match its (archive) suffix; "
 					"the expected prefix was '%s'\n",
@@ -846,7 +853,7 @@ static int slbt_init_link_params(struct slbt_driver_ctx_impl * ctx)
 			libname = base;
 		else {
 			if (ctx->cctx.drvflags & SLBT_DRIVER_VERBOSITY_ERRORS)
-				fprintf(stderr,
+				slbt_dprintf(fderr,
 					"%s: error: output file prefix does "
 					"not match its (shared library) suffix; "
 					"the expected prefix was '%s'\n",
@@ -867,7 +874,7 @@ static int slbt_init_link_params(struct slbt_driver_ctx_impl * ctx)
 			fmodule = true;
 		} else {
 			if (ctx->cctx.drvflags & SLBT_DRIVER_VERBOSITY_ERRORS)
-				fprintf(stderr,
+				slbt_dprintf(fderr,
 					"%s: error: output file prefix does "
 					"not match its (libtool wrapper) suffix; "
 					"the expected prefix was '%s'\n",
@@ -896,6 +903,7 @@ int slbt_get_driver_ctx(
 	char **				argv,
 	char **				envp,
 	uint32_t			flags,
+	const struct slbt_fd_ctx *	fdctx,
 	struct slbt_driver_ctx **	pctx)
 {
 	struct slbt_split_vector	sargv;
@@ -908,13 +916,22 @@ int slbt_get_driver_ctx(
 
 	argv_optv_init(slbt_default_options,optv);
 
-	if (slbt_split_argv(argv,flags,&sargv))
+	if (!fdctx) {
+		fdctx = &(const struct slbt_fd_ctx) {
+			.fdin  = STDIN_FILENO,
+			.fdout = STDOUT_FILENO,
+			.fderr = STDERR_FILENO,
+			.fdlog = (-1)
+		};
+	}
+
+	if (slbt_split_argv(argv,flags,&sargv,fdctx->fderr))
 		return -1;
 
 	if (!(meta = argv_get(
 			sargv.targv,optv,
 			slbt_argv_flags(flags),
-			STDERR_FILENO)))
+			fdctx->fderr)))
 		return -1;
 
 	program = argv_program_name(argv[0]);
@@ -933,7 +950,9 @@ int slbt_get_driver_ctx(
 				case TAG_HELP:
 				case TAG_HELP_ALL:
 					if (flags & SLBT_DRIVER_VERBOSITY_USAGE)
-						return slbt_driver_usage(program,entry->arg,optv,meta);
+						return slbt_driver_usage(
+							fdctx->fdout,program,
+							entry->arg,optv,meta);
 
 				case TAG_VERSION:
 					cctx.drvflags |= SLBT_DRIVER_VERSION;
@@ -1184,7 +1203,7 @@ int slbt_get_driver_ctx(
 
 	/* debug: raw argument vector */
 	if (cctx.drvflags & SLBT_DRIVER_DEBUG)
-		slbt_output_raw_vector(argv,envp);
+		slbt_output_raw_vector(fdctx->fderr,argv,envp);
 
 	/* -o in install mode means USER */
 	if ((cctx.mode == SLBT_MODE_INSTALL) && cctx.output) {
@@ -1197,7 +1216,7 @@ int slbt_get_driver_ctx(
 		cctx.mode = SLBT_MODE_INFO;
 
 	/* driver context */
-	if (!(ctx = slbt_driver_ctx_alloc(meta,&cctx)))
+	if (!(ctx = slbt_driver_ctx_alloc(meta,fdctx,&cctx)))
 		return slbt_get_driver_ctx_fail(meta);
 
 	ctx->ctx.program	= program;
@@ -1252,6 +1271,7 @@ int slbt_get_driver_ctx(
 
 int slbt_create_driver_ctx(
 	const struct slbt_common_ctx *	cctx,
+	const struct slbt_fd_ctx *	fdctx,
 	struct slbt_driver_ctx **	pctx)
 {
 	const struct argv_option *	optv[SLBT_OPTV_ELEMENTS];
@@ -1261,10 +1281,19 @@ int slbt_create_driver_ctx(
 
 	argv_optv_init(slbt_default_options,optv);
 
-	if (!(meta = argv_get(argv,optv,0,STDERR_FILENO)))
+	if (!fdctx) {
+		fdctx = &(const struct slbt_fd_ctx) {
+			.fdin  = STDIN_FILENO,
+			.fdout = STDOUT_FILENO,
+			.fderr = STDERR_FILENO,
+			.fdlog = (-1)
+		};
+	}
+
+	if (!(meta = argv_get(argv,optv,0,fdctx->fderr)))
 		return -1;
 
-	if (!(ctx = slbt_driver_ctx_alloc(meta,cctx)))
+	if (!(ctx = slbt_driver_ctx_alloc(meta,fdctx,cctx)))
 		return slbt_get_driver_ctx_fail(0);
 
 	ctx->ctx.cctx = &ctx->cctx;
@@ -1363,4 +1392,36 @@ int  slbt_set_alternate_host(
 const struct slbt_source_version * slbt_source_version(void)
 {
 	return &slbt_src_version;
+}
+
+int slbt_get_driver_fdctx(
+	const struct slbt_driver_ctx *	dctx,
+	struct slbt_fd_ctx *		fdctx)
+{
+	struct slbt_driver_ctx_impl *	ictx;
+
+	ictx = slbt_get_driver_ictx(dctx);
+
+	fdctx->fdin  = ictx->fdctx.fdin;
+	fdctx->fdout = ictx->fdctx.fdout;
+	fdctx->fderr = ictx->fdctx.fderr;
+	fdctx->fdlog = ictx->fdctx.fdlog;
+
+	return 0;
+}
+
+int slbt_set_driver_fdctx(
+	struct slbt_driver_ctx *	dctx,
+	const struct slbt_fd_ctx *	fdctx)
+{
+	struct slbt_driver_ctx_impl *	ictx;
+
+	ictx = slbt_get_driver_ictx(dctx);
+
+	ictx->fdctx.fdin  = fdctx->fdin;
+	ictx->fdctx.fdout = fdctx->fdout;
+	ictx->fdctx.fderr = fdctx->fderr;
+	ictx->fdctx.fdlog = fdctx->fdlog;
+
+	return 0;
 }

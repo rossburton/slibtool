@@ -21,6 +21,7 @@
 #include "argv/argv.h"
 
 static int slbt_uninstall_usage(
+	int				fdout,
 	const char *			program,
 	const char *			arg,
 	const struct argv_option **	optv,
@@ -33,7 +34,7 @@ static int slbt_uninstall_usage(
 		"Options:\n",
 		program);
 
-	argv_usage(STDOUT_FILENO,header,optv,arg);
+	argv_usage(fdout,header,optv,arg);
 	argv_free(meta);
 
 	return SLBT_USAGE;
@@ -245,6 +246,7 @@ int slbt_exec_uninstall(
 	struct slbt_exec_ctx *		ectx)
 {
 	int				ret;
+	int				fdout;
 	char **				argv;
 	char **				iargv;
 	uint32_t			flags;
@@ -269,6 +271,7 @@ int slbt_exec_uninstall(
 	slbt_reset_arguments(ectx);
 	slbt_disable_placeholders(ectx);
 	iargv = ectx->cargv;
+	fdout = slbt_driver_fdout(dctx);
 
 	/* work around non-conforming uses of --mode=uninstall */
 	if (!(strcmp(iargv[0],"/bin/sh")) || !strcmp(iargv[0],"/bin/bash"))
@@ -278,16 +281,18 @@ int slbt_exec_uninstall(
 	argv_optv_init(slbt_uninstall_options,optv);
 
 	if (!iargv[1] && (dctx->cctx->drvflags & SLBT_DRIVER_VERBOSITY_USAGE))
-		return slbt_uninstall_usage(dctx->program,0,optv,0);
+		return slbt_uninstall_usage(
+			fdout,
+			dctx->program,
+			0,optv,0);
 
 	/* <uninstall> argv meta */
 	if (!(meta = argv_get(
-			iargv,
-			optv,
+			iargv,optv,
 			dctx->cctx->drvflags & SLBT_DRIVER_VERBOSITY_ERRORS
 				? ARGV_VERBOSITY_ERRORS
 				: ARGV_VERBOSITY_NONE,
-			STDERR_FILENO)))
+			fdout)))
 		return slbt_exec_uninstall_fail(
 			actx,meta,
 			SLBT_CUSTOM_ERROR(dctx,SLBT_ERR_UNINSTALL_FAIL));
@@ -329,7 +334,10 @@ int slbt_exec_uninstall(
 
 	/* --help */
 	if (flags & SLBT_UNINSTALL_HELP) {
-		slbt_uninstall_usage(dctx->program,0,optv,meta);
+		slbt_uninstall_usage(
+			fdout,
+			dctx->program,
+			0,optv,meta);
 		return 0;
 	}
 
