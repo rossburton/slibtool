@@ -4,6 +4,9 @@
 /*  Released under the Standard MIT License; see COPYING.SLIBTOOL. */
 /*******************************************************************/
 
+#ifndef SLIBTOOL_ERRINFO_IMPL_H
+#define SLIBTOOL_ERRINFO_IMPL_H
+
 #include <errno.h>
 #include <slibtool/slibtool.h>
 
@@ -78,3 +81,5 @@ int slbt_record_error(
 		__LINE__,                 \
 		SLBT_ERROR_NESTED,        \
 		0)
+
+#endif

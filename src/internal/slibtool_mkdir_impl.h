@@ -4,6 +4,9 @@
 /*  Released under the Standard MIT License; see COPYING.SLIBTOOL. */
 /*******************************************************************/
 
+#ifndef SLIBTOOL_MKDIR_IMPL_H
+#define SLIBTOOL_MKDIR_IMPL_H
+
 #include <errno.h>
 #include <unistd.h>
 
@@ -23,3 +26,5 @@ static inline int slbt_mkdir(const char * path)
 
 	return 0;
 }
+
+#endif

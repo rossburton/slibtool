@@ -1,8 +1,5 @@
-/*******************************************************************/
-/*  slibtool: a skinny libtool implementation, written in C        */
-/*  Copyright (C) 2016--2018  Z. Gilboa                            */
-/*  Released under the Standard MIT License; see COPYING.SLIBTOOL. */
-/*******************************************************************/
+#ifndef SLIBTOOL_METAFILE_IMPL_H
+#define SLIBTOOL_METAFILE_IMPL_H
 
 #include <slibtool/slibtool.h>
 
@@ -17,3 +14,5 @@ int  slbt_create_library_wrapper(
 	char *				soname,
 	char *				soxyz,
 	char *				solnk);
+
+#endif

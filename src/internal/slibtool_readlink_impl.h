@@ -4,6 +4,9 @@
 /*  Released under the Standard MIT License; see COPYING.SLIBTOOL. */
 /*******************************************************************/
 
+#ifndef SLIBTOOL_READLINK_IMPL_H
+#define SLIBTOOL_READLINK_IMPL_H
+
 #include <unistd.h>
 
 static inline int slbt_readlink(
@@ -22,3 +25,5 @@ static inline int slbt_readlink(
 		return 0;
 	}
 }
+
+#endif

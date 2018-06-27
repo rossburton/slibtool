@@ -1,8 +1,5 @@
-/*******************************************************************/
-/*  slibtool: a skinny libtool implementation, written in C        */
-/*  Copyright (C) 2016--2018  Z. Gilboa                            */
-/*  Released under the Standard MIT License; see COPYING.SLIBTOOL. */
-/*******************************************************************/
+#ifndef SLIBTOOL_SYMLINK_IMPL_H
+#define SLIBTOOL_SYMLINK_IMPL_H
 
 #include <stdbool.h>
 #include <slibtool/slibtool.h>
@@ -15,3 +12,5 @@ int slbt_create_symlink(
 	bool				flawrapper);
 
 int slbt_symlink_is_a_placeholder(char * lnkpath);
+
+#endif
