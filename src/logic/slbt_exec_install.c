@@ -4,6 +4,7 @@
 /*  Released under the Standard MIT License; see COPYING.SLIBTOOL. */
 /*******************************************************************/
 
+#include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
@@ -16,6 +17,7 @@
 #include <slibtool/slibtool.h>
 #include "slibtool_driver_impl.h"
 #include "slibtool_install_impl.h"
+#include "slibtool_mapfile_impl.h"
 #include "slibtool_readlink_impl.h"
 #include "slibtool_spawn_impl.h"
 #include "slibtool_symlink_impl.h"
@@ -224,17 +226,15 @@ static int slbt_exec_install_library_wrapper(
 	struct argv_entry *		entry,
 	char *				dstdir)
 {
-	int		ret;
-	FILE *		fsrc;
-	FILE *		fdst;
-	const char *	base;
-	char *		cfgline;
-	char *		srcline;
-	char *		dstline;
-	char		clainame[PATH_MAX];
-	char		instname[PATH_MAX];
-	char		cfgbuf  [PATH_MAX*4];
-	struct stat	st;
+	int			fddst;
+	size_t			buflen;
+	const char *		base;
+	char *			srcline;
+	char *			dstline;
+	char			clainame[PATH_MAX];
+	char			instname[PATH_MAX];
+	char			cfgbuf  [PATH_MAX];
+	struct slbt_map_info *	mapinfo;
 
 	/* base libfoo.la */
 	if ((base = strrchr(entry->arg,'/')))
@@ -252,59 +252,56 @@ static int slbt_exec_install_library_wrapper(
 			entry->arg) >= sizeof(clainame))
 		return SLBT_BUFFER_ERROR(dctx);
 
-	/* fdst (libfoo.la.slibtool.install, build directory) */
-	if (!(fdst = fopen(clainame,"w")))
+	/* fddst (libfoo.la.slibtool.install, build directory) */
+	if ((fddst = openat(AT_FDCWD,clainame,O_RDWR|O_CREAT|O_TRUNC,0644)) < 0)
 		return SLBT_SYSTEM_ERROR(dctx);
 
-	/* fsrc (libfoo.la, build directory) */
-	if ((stat(entry->arg,&st))) {
-		fclose(fdst);
-		return SLBT_SYSTEM_ERROR(dctx);
-	}
-
-	if (!(fsrc = fopen(entry->arg,"r"))) {
-		fclose(fdst);
+	/* mapinfo (libfoo.la, build directory) */
+	if (!(mapinfo = slbt_map_file(AT_FDCWD,entry->arg,SLBT_MAP_INPUT))) {
+		close(fddst);
 		return SLBT_SYSTEM_ERROR(dctx);
 	}
 
-	if ((size_t)st.st_size < sizeof(cfgbuf))
+	/* srcline */
+	if (mapinfo->size < sizeof(cfgbuf)) {
+		buflen  = sizeof(cfgbuf);
 		srcline = cfgbuf;
-	else if (!(srcline = malloc(st.st_size+1))) {
-		fclose(fdst);
-		fclose(fsrc);
+	} else {
+		buflen  = mapinfo->size;
+		srcline = malloc(++buflen);
+	}
+
+	if (!srcline) {
+		close(fddst);
+		slbt_unmap_file(mapinfo);
 		return SLBT_SYSTEM_ERROR(dctx);
 	}
 
-	/* copy config, install=no --> install=yes */
-	cfgline = fgets(srcline,st.st_size+1,fsrc);
-	ret     = 0;
+	/* copy config, installed=no --> installed=yes */
+	while (mapinfo->mark < mapinfo->cap) {
+		if (slbt_mapped_readline(dctx,mapinfo,srcline,buflen) < 0) {
+			close(fddst);
+			slbt_unmap_file(mapinfo);
+			return SLBT_NESTED_ERROR(dctx);
+		}
 
-	while (cfgline && (ret == 0)) {
-		dstline = !(strcmp(srcline,"installed=no\n"))
-			? "installed=yes\n"
-			: srcline;
+		dstline = strcmp(srcline,"installed=no\n")
+			? srcline
+			: "installed=yes\n";
 
-		if (fprintf(fdst,"%s",dstline) < 0)
-			ret = SLBT_SYSTEM_ERROR(dctx);
-		else
-			cfgline = fgets(srcline,st.st_size+1,fsrc);
+		if (slbt_dprintf(fddst,"%s",dstline) < 0) {
+			close(fddst);
+			slbt_unmap_file(mapinfo);
+			return SLBT_SYSTEM_ERROR(dctx);
+		}
 	}
 
-	/* free, flush, verify */
 	if (srcline != cfgbuf)
 		free(srcline);
 
-	if (ret) {
-		fclose(fdst);
-		fclose(fsrc);
-	} else {
-		fflush(fdst);
-		ret = ferror(fdst) ? -1 : 0;
-		fclose(fdst);
-
-		ret = ferror(fsrc) ? -1 : ret;
-		fclose(fsrc);
-	}
+	/* close, unmap */
+	close(fddst);
+	slbt_unmap_file(mapinfo);
 
 	/* cp libfoo.la.slibtool.instal /dstdir/libfoo.la */
 	if (slbt_copy_file(dctx,ectx,clainame,instname))
