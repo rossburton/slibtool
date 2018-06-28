@@ -16,6 +16,7 @@
 #include "slibtool_spawn_impl.h"
 #include "slibtool_mkdir_impl.h"
 #include "slibtool_errinfo_impl.h"
+#include "slibtool_mapfile_impl.h"
 #include "slibtool_metafile_impl.h"
 #include "slibtool_readlink_impl.h"
 #include "slibtool_symlink_impl.h"
@@ -83,72 +84,61 @@ static int slbt_get_deps_meta(
 	char *			libfilename,
 	struct slbt_deps_meta *	depsmeta)
 {
-	int		ret;
-	FILE *		fdeps;
-	struct stat	st;
-	char *		deplib;
-	char		depfile[4*PATH_MAX];
-	char *		deplibs = depfile;
-	char *		base;
-	size_t		libexlen;
-
-	(void)dctx;
+	char *			ch;
+	char *			cap;
+	char *			base;
+	size_t			libexlen;
+	struct stat		st;
+	struct slbt_map_info *	mapinfo;
+	char			depfile[PATH_MAX];
 
 	/* -rpath */
-	if ((size_t)snprintf(depfile,sizeof(depfile),"%s.slibtool.rpath",
+	if ((size_t)snprintf(depfile,sizeof(depfile),
+				"%s.slibtool.rpath",
 				libfilename)
 			>= sizeof(depfile))
 		return SLBT_BUFFER_ERROR(dctx);
 
+	/* -Wl,%s */
 	if (!(lstat(depfile,&st))) {
-		/* -Wl,%s */
 		depsmeta->infolen += st.st_size + 4;
 		depsmeta->infolen++;
 	}
 
 	/* .deps */
-	if ((size_t)snprintf(depfile,sizeof(depfile),"%s.slibtool.deps",
+	if ((size_t)snprintf(depfile,sizeof(depfile),
+				"%s.slibtool.deps",
 				libfilename)
 			>= sizeof(depfile))
 		return SLBT_BUFFER_ERROR(dctx);
 
-	if ((stat(depfile,&st)))
+	/* mapinfo */
+	if (!(mapinfo = slbt_map_file(AT_FDCWD,depfile,SLBT_MAP_INPUT)))
 		return SLBT_SYSTEM_ERROR(dctx);
 
-	if (!(fdeps = fopen(depfile,"r")))
-		return SLBT_SYSTEM_ERROR(dctx);
-
-	if ((size_t)st.st_size >= sizeof(depfile))
-		if (!(deplibs = malloc(st.st_size+1))) {
-			fclose(fdeps);
-			return SLBT_SYSTEM_ERROR(dctx);
-		}
-
-	depsmeta->infolen += st.st_size;
+	/* copied length */
+	depsmeta->infolen += mapinfo->size;
 	depsmeta->infolen++;
 
-	deplib = st.st_size
-		? fgets(deplibs,st.st_size+1,fdeps)
-		: 0;
+	/* libexlen */
+	libexlen = (base = strrchr(libfilename,'/'))
+		? strlen(depfile) + 2 + (base - libfilename)
+		: strlen(depfile) + 2;
 
-	if ((base = strrchr(libfilename,'/')))
-		libexlen = strlen(depfile) + base - libfilename + 2;
-	else
-		libexlen = strlen(depfile) + 2;
+	/* iterate */
+	ch  = mapinfo->addr;
+	cap = mapinfo->cap;
 
-	for (; deplib; ) {
-		depsmeta->infolen += libexlen;
-		depsmeta->depscnt++;
-		deplib = fgets(deplibs,st.st_size+1,fdeps);
+	for (; ch<cap; ) {
+		if (*ch++ == 'n') {
+			depsmeta->infolen += libexlen;
+			depsmeta->depscnt++;
+		}
 	}
 
-	if (deplibs != depfile)
-		free(deplibs);
+	slbt_unmap_file(mapinfo);
 
-	ret = ferror(fdeps) ? SLBT_FILE_ERROR(dctx) : 0;
-	fclose(fdeps);
-
-	return ret;
+	return 0;
 }
 
 static bool slbt_adjust_input_argument(
