@@ -23,6 +23,8 @@ static void slbt_dump_machine_child(
 	char *	compiler;
 	char *	argv[3];
 
+	close(fd[0]);
+
 	if ((compiler = strrchr(program,'/')))
 		compiler++;
 	else
@@ -31,8 +33,6 @@ static void slbt_dump_machine_child(
 	argv[0] = compiler;
 	argv[1] = "-dumpmachine";
 	argv[2] = 0;
-
-	close(fd[0]);
 
 	if ((fd[0] = open("/dev/null",O_RDONLY)) >= 0)
 		if (dup2(fd[0],0) == 0)
@@ -45,25 +45,27 @@ static void slbt_dump_machine_child(
 int slbt_dump_machine(
 	const char *	compiler,
 	char *		machine,
-	size_t		bufsize)
+	size_t		buflen)
 {
+	int	ret;
 	pid_t	pid;
 	pid_t	rpid;
 	int	code;
 	int	fd[2];
-	FILE *	fmachine;
-	char *	newline;
 	char *	mark;
-	char	check[2];
 	char	program[PATH_MAX];
 
-	if (!machine || !bufsize)
+	/* setup */
+	if (!machine || !--buflen) {
+		errno = EINVAL;
 		return -1;
+	}
 
 	if ((size_t)snprintf(program,sizeof(program),"%s",
 			compiler) >= sizeof(program))
 		return -1;
 
+	/* fork */
 	if (pipe(fd))
 		return -1;
 
@@ -73,43 +75,60 @@ int slbt_dump_machine(
 		return -1;
 	}
 
+	/* child */
 	if (pid == 0)
 		slbt_dump_machine_child(
 			program,
 			fd);
 
+	/* parent */
+	close(fd[1]);
+
+	mark = machine;
+
+	for (; buflen; ) {
+		ret = read(fd[0],mark,buflen);
+
+		while ((ret < 0) && (errno == EINTR))
+			ret = read(fd[0],mark,buflen);
+
+		if (ret > 0) {
+			buflen -= ret;
+			mark   += ret;
+
+		} else if (ret == 0) {
+			close(fd[0]);
+			buflen = 0;
+
+		} else {
+			close(fd[0]);
+			return ret;
+		}
+	}
+
+	/* execve verification */
 	rpid = waitpid(
 		pid,
 		&code,
 		0);
 
 	if ((rpid != pid) || code) {
-		close(fd[0]);
-		close(fd[1]);
+		errno = EBADR;
 		return -1;
 	}
 
-	if ((fmachine = fdopen(fd[0],"r"))) {
-		close(fd[1]);
-		newline = 0;
-
-		if (fgets(machine,bufsize,fmachine) == machine)
-			if (!fgets(check,sizeof(check),fmachine))
-				if (feof(fmachine))
-					if ((newline = strrchr(machine,'\n')))
-						*newline = 0;
-
-		fclose(fmachine);
-	} else {
-		newline = 0;
-		close(fd[0]);
-		close(fd[1]);
+	/* newline verification */
+	if ((mark == machine) || (*--mark != '\n')) {
+		errno = EBADR;
+		return -1;
 	}
 
-	/* support the portbld <--> unknown synonym */
-	if (newline)
-		if ((mark = strstr(machine,"-portbld-")))
-			memcpy(mark,"-unknown",8);
+	*mark = 0;
 
-	return newline ? 0 : -1;
+	/* portbld <--> unknown synonym? */
+	if ((mark = strstr(machine,"-portbld-")))
+		memcpy(mark,"-unknown",8);
+
+	/* all done */
+	return 0;
 }
