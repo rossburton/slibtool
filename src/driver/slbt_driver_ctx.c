@@ -416,6 +416,7 @@ static void slbt_get_host_quad(
 }
 
 static int slbt_init_host_params(
+	const struct slbt_driver_ctx *	dctx,
 	const struct slbt_common_ctx *	cctx,
 	struct slbt_host_strs *		drvhost,
 	struct slbt_host_params *	host,
@@ -458,10 +459,12 @@ static int slbt_init_host_params(
 	if (host->host) {
 		cfgmeta->host = cfgexplicit;
 		fhost         = true;
+
 	} else if (cctx->target) {
 		host->host    = cctx->target;
 		cfgmeta->host = cfgtarget;
 		ftarget       = true;
+
 	} else if (strrchr(base,'-')) {
 		if (!(drvhost->host = strdup(cctx->cargv[0])))
 			return -1;
@@ -471,9 +474,22 @@ static int slbt_init_host_params(
 		host->host    = drvhost->host;
 		cfgmeta->host = cfgcompiler;
 		fcompiler     = true;
-	} else if (fdumpmachine && !(slbt_dump_machine(
-				cctx->cargv[0],
-				buf,sizeof(buf)))) {
+
+	} else if (!fdumpmachine) {
+		host->host    = drvhost->machine;
+		cfgmeta->host = cfgnmachine;
+		fnative       = true;
+
+	} else if (slbt_dump_machine(cctx->cargv[0],buf,sizeof(buf)) < 0) {
+		if (dctx)
+			slbt_dprintf(
+				slbt_driver_fderr(dctx),
+				"%s: could not determine host "
+				"via -dumpmachine\n",
+				dctx->program);
+		return -1;
+
+	} else {
 		if (!(drvhost->host = strdup(buf)))
 			return -1;
 
@@ -494,10 +510,6 @@ static int slbt_init_host_params(
 					&& !strcmp(hostquad[1],machinequad[1])
 					&& !strcmp(hostquad[2],machinequad[2]);
 		}
-	} else {
-		host->host    = drvhost->machine;
-		cfgmeta->host = cfgnmachine;
-		fnative       = true;
 	}
 
 	/* flavor */
@@ -1233,6 +1245,7 @@ int slbt_get_driver_ctx(
 
 	} else {
 		if (slbt_init_host_params(
+				&ctx->ctx,
 				&ctx->cctx,
 				&ctx->host,
 				&ctx->cctx.host,
@@ -1366,6 +1379,7 @@ int  slbt_set_alternate_host(
 	ictx->ctx.cctx.ahost.flavor = ictx->ctx.ahost.flavor;
 
 	if (slbt_init_host_params(
+			0,
 			ctx->cctx,
 			&ictx->ctx.ahost,
 			&ictx->ctx.cctx.ahost,
