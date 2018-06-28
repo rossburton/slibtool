@@ -23,7 +23,7 @@ static void slbt_dump_machine_child(
 	char *	compiler;
 	char *	argv[3];
 
-	if ((compiler = strchr(program,'/')))
+	if ((compiler = strrchr(program,'/')))
 		compiler++;
 	else
 		compiler = program;
