@@ -478,7 +478,6 @@ static int slbt_init_host_params(
 	} else if (!fdumpmachine) {
 		host->host    = drvhost->machine;
 		cfgmeta->host = cfgnmachine;
-		fnative       = true;
 
 	} else if (slbt_dump_machine(cctx->cargv[0],buf,sizeof(buf)) < 0) {
 		if (dctx)
