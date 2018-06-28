@@ -14,6 +14,7 @@
 
 #include <slibtool/slibtool.h>
 #include "slibtool_spawn_impl.h"
+#include "slibtool_dprintf_impl.h"
 #include "slibtool_symlink_impl.h"
 #include "slibtool_readlink_impl.h"
 #include "slibtool_errinfo_impl.h"
@@ -79,24 +80,28 @@ int slbt_archive_import(
 	char *				dstarchive,
 	char *				srcarchive)
 {
-	int	ret;
 	pid_t	pid;
 	pid_t	rpid;
 	int	fd[2];
-	FILE *	fout;
 	char *	dst;
 	char *	src;
+	char *	fmt;
 	char	mridst [L_tmpnam];
 	char	mrisrc [L_tmpnam];
 	char	program[PATH_MAX];
 
+	/* not needed? */
 	if (slbt_symlink_is_a_placeholder(srcarchive))
 		return 0;
 
-	if ((size_t)snprintf(program,sizeof(program),"%s",
-			dctx->cctx->host.ar) >= sizeof(program))
+	/* program */
+	if ((size_t)snprintf(program,sizeof(program),
+				"%s",
+				dctx->cctx->host.ar)
+			>= sizeof(program))
 		return SLBT_BUFFER_ERROR(dctx);
 
+	/* fork */
 	if (pipe(fd))
 		return SLBT_SYSTEM_ERROR(dctx);
 
@@ -106,35 +111,30 @@ int slbt_archive_import(
 		return SLBT_SYSTEM_ERROR(dctx);
 	}
 
+	/* child */
 	if (pid == 0)
 		slbt_archive_import_child(
 			program,
 			fd);
 
+	/* parent */
+	close(fd[0]);
+
 	ectx->pid = pid;
 
 	dst = slbt_mri_argument(dstarchive,mridst);
 	src = slbt_mri_argument(srcarchive,mrisrc);
+	fmt = "OPEN %s\n"
+	      "ADDLIB %s\n"
+	      "SAVE\n"
+	      "END\n";
 
-	if ((fout = fdopen(fd[1],"a"))) {
-		ret = (fprintf(
-				fout,
-				"OPEN %s\n"
-				"ADDLIB %s\n"
-				"SAVE\n"
-				"END\n",
-				dst,
-				src) < 0)
-			? SLBT_SYSTEM_ERROR(dctx)
-			: 0;
-
-		fclose(fout);
-		close(fd[0]);
-	} else {
-		ret = SLBT_SYSTEM_ERROR(dctx);
-		close(fd[0]);
+	if (slbt_dprintf(fd[1],fmt,dst,src) < 0) {
 		close(fd[1]);
+		return SLBT_SYSTEM_ERROR(dctx);
 	}
+
+	close(fd[1]);
 
 	rpid = waitpid(
 		pid,
@@ -147,6 +147,6 @@ int slbt_archive_import(
 	if (src == mrisrc)
 		unlink(src);
 
-	return ret || (rpid != pid) || ectx->exitcode
-		? SLBT_CUSTOM_ERROR(dctx,SLBT_ERR_ARCHIVE_IMPORT) : 0;
+	return (rpid == pid) && (ectx->exitcode == 0)
+		? 0 : SLBT_CUSTOM_ERROR(dctx,SLBT_ERR_ARCHIVE_IMPORT);
 }
