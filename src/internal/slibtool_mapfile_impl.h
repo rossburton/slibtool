@@ -7,6 +7,8 @@
 struct slbt_map_info {
 	void *	addr;
 	size_t	size;
+	char *	mark;
+	char *	cap;
 };
 
 struct slbt_map_info * slbt_map_file(
@@ -14,5 +16,10 @@ struct slbt_map_info * slbt_map_file(
 	uint32_t);
 
 void slbt_unmap_file(struct slbt_map_info *);
+
+int  slbt_mapped_readline(
+	const struct slbt_driver_ctx *,
+	struct slbt_map_info *,
+	char *, size_t);
 
 #endif
