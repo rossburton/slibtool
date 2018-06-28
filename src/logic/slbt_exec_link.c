@@ -240,27 +240,27 @@ static int slbt_exec_link_adjust_argument_vector(
 	const char *			cwd,
 	bool				flibrary)
 {
-	char ** carg;
-	char ** aarg;
-	char *	ldir;
-	char *	slash;
-	char *	mark;
-	char *	darg;
-	char *	dot;
-	char *	dep;
-	char *	base;
-	FILE *	fdeps;
-	char *	dpath;
-	bool	freqd;
-	int	argc;
-	char	arg[PATH_MAX];
-	char	lib[PATH_MAX];
-	char	depdir  [PATH_MAX];
-	char	rpathdir[PATH_MAX];
-	char	rpathlnk[PATH_MAX];
-	bool	fwholearchive = false;
-	struct	stat st;
-	int	fd;
+	int			fd;
+	char ** 		carg;
+	char ** 		aarg;
+	char *			ldir;
+	char *			slash;
+	char *			mark;
+	char *			darg;
+	char *			dot;
+	char *			base;
+	char *			dpath;
+	int			argc;
+	char			arg[PATH_MAX];
+	char			lib[PATH_MAX];
+	char			depdir  [PATH_MAX];
+	char			rpathdir[PATH_MAX];
+	char			rpathlnk[PATH_MAX];
+	struct stat		st;
+	size_t			size;
+	size_t			dlen;
+	struct slbt_map_info *	mapinfo;
+	bool			fwholearchive = false;
 
 	for (argc=0,carg=ectx->cargv; *carg; carg++)
 		argc++;
@@ -279,10 +279,10 @@ static int slbt_exec_link_adjust_argument_vector(
 	carg = ectx->cargv;
 	aarg = depsmeta->altv;
 	darg = depsmeta->args;
+	size = depsmeta->infolen;
 
 	for (; *carg; ) {
 		dpath = 0;
-		freqd = false;
 
 		if (!strcmp(*carg,"-Wl,--whole-archive"))
 			fwholearchive = true;
@@ -366,7 +366,6 @@ static int slbt_exec_link_adjust_argument_vector(
 			}
 
 			dpath = lib;
-			freqd = true;
 			sprintf(lib,"%s.slibtool.deps",*carg);
 
 			/* account for {'-','L','-','l'} */
@@ -409,79 +408,63 @@ static int slbt_exec_link_adjust_argument_vector(
 			}
 		}
 
-		if (dpath) {
-			if (!stat(dpath,&st) && (fdeps = fopen(dpath,"r"))) {
-				dep = st.st_size
-					? fgets(darg,st.st_size+1,fdeps)
-					: 0;
-
-				if (!(strncmp(lib,".libs/",6))) {
-					*aarg++ = "-L.libs";
-					lib[1] = 0;
-				} else if ((base = strrchr(lib,'/'))) {
-					if (base - lib == 5) {
-						if (!(strncmp(&base[-5],".libs/",6)))
-							base -= 4;
-
-					} else if (base - lib >= 6) {
-						if (!(strncmp(&base[-6],"/.libs/",7)))
-							base -= 6;
-					}
-
-					*base = 0;
-				} else {
-					lib[0] = '.';
-					lib[1] = 0;
-				}
-
-				for (; dep; ) {
-					*aarg++ = darg;
-					mark    = darg;
-					darg   += strlen(dep);
-
-					if (darg[-1] == '\n')
-						darg[-1] = 0;
-					else
-						darg++;
-
-					/* handle -L... as needed */
-					if ((mark[0] == '-')
-							&& (mark[1] == 'L')
-							&& (mark[2] != '/')) {
-						if (strlen(mark) >= sizeof(depdir) - 1)
-							return slbt_exec_link_exit(
-								depsmeta,
-								SLBT_BUFFER_ERROR(dctx));
-
-						darg = mark;
-						strcpy(depdir,&mark[2]);
-						sprintf(darg,"-L%s/%s",lib,depdir);
-
-						darg += strlen(darg);
-						darg++;
-					}
-
-					dep = fgets(darg,st.st_size+1,fdeps);
-				}
-
-				if (ferror(fdeps)) {
-					free(depsmeta->altv);
-					free(depsmeta->args);
-					fclose(fdeps);
-
-					return slbt_exec_link_exit(
-						depsmeta,
-						SLBT_FILE_ERROR(dctx));
-				} else {
-					fclose(fdeps);
-				}
-			} else if (freqd) {
-				free(depsmeta->altv);
-				free(depsmeta->args);
-
+		if (dpath && !stat(dpath,&st)) {
+			if (!(mapinfo = slbt_map_file(
+					AT_FDCWD,dpath,
+					SLBT_MAP_INPUT)))
 				return slbt_exec_link_exit(
 					depsmeta,
-					SLBT_CUSTOM_ERROR(dctx,SLBT_ERR_LINK_FREQ));
+					SLBT_SYSTEM_ERROR(dctx));
+
+			if (!(strncmp(lib,".libs/",6))) {
+				*aarg++ = "-L.libs";
+				lib[1] = 0;
+			} else if ((base = strrchr(lib,'/'))) {
+				if (base - lib == 5) {
+					if (!(strncmp(&base[-5],".libs/",6)))
+						base -= 4;
+
+				} else if (base - lib >= 6) {
+					if (!(strncmp(&base[-6],"/.libs/",7)))
+						base -= 6;
+				}
+
+				*base = 0;
+			} else {
+				lib[0] = '.';
+				lib[1] = 0;
+			}
+
+			while (mapinfo->mark < mapinfo->cap) {
+				if (slbt_mapped_readline(dctx,mapinfo,darg,size))
+					return slbt_exec_link_exit(
+						depsmeta,
+						SLBT_NESTED_ERROR(dctx));
+
+				*aarg++   = darg;
+				mark      = darg;
+
+				dlen      = strlen(darg);
+				size     -= dlen;
+				darg     += dlen;
+				darg[-1]  = 0;
+
+				/* handle -L... as needed */
+				if ((mark[0] == '-')
+						&& (mark[1] == 'L')
+						&& (mark[2] != '/')) {
+					if (strlen(mark) >= sizeof(depdir) - 1)
+						return slbt_exec_link_exit(
+							depsmeta,
+							SLBT_BUFFER_ERROR(dctx));
+
+					darg = mark;
+					strcpy(depdir,&mark[2]);
+					sprintf(darg,"-L%s/%s",lib,depdir);
+
+					darg += strlen(darg);
+					darg++;
+				}
 			}
 		}
 	}
