@@ -473,9 +473,6 @@ static int slbt_free_exec_ctx_impl(
 	if (ictx->ctx.fwrapper)
 		fclose(ictx->ctx.fwrapper);
 
-	if (ictx->ctx.fdeps)
-		fclose(ictx->ctx.fdeps);
-
 	free(ictx->args);
 	free(ictx->shadow);
 	free (ictx);

@@ -15,6 +15,7 @@
 #include <slibtool/slibtool.h>
 #include "slibtool_spawn_impl.h"
 #include "slibtool_mkdir_impl.h"
+#include "slibtool_dprintf_impl.h"
 #include "slibtool_errinfo_impl.h"
 #include "slibtool_mapfile_impl.h"
 #include "slibtool_metafile_impl.h"
@@ -613,40 +614,43 @@ static int slbt_exec_link_create_dep_file(
 	const char *		libfilename,
 	bool			farchive)
 {
-	char **	parg;
-	char *	popt;
-	char *	plib;
-	char *	path;
-	char *	mark;
-	char *	base;
-	size_t	size;
-	FILE *	fdeps;
-	char *	deplib;
-	char	reladir[PATH_MAX];
-	char	deplibs[PATH_MAX];
-	char	depfile[PATH_MAX];
-	struct  stat st;
-	int	ldepth;
-	int	fdyndep;
-	int	fnodeps;
+	int			ret;
+	int			deps;
+	char **			parg;
+	char *			popt;
+	char *			plib;
+	char *			path;
+	char *			mark;
+	char *			base;
+	size_t			size;
+	size_t			slen;
+	char			deplib [PATH_MAX];
+	char			reladir[PATH_MAX];
+	char			depfile[PATH_MAX];
+	struct stat		st;
+	int			ldepth;
+	int			fdyndep;
+	int			fnodeps;
+	struct slbt_map_info *  mapinfo;
 
-	if (ectx->fdeps) {
-		fclose(ectx->fdeps);
-		ectx->fdeps = 0;
-	}
+	/* depfile */
+	slen = snprintf(depfile,sizeof(depfile),
+		"%s.slibtool.deps",
+		libfilename);
 
-	if ((size_t)snprintf(depfile,sizeof(depfile),"%s.slibtool.deps",
-				libfilename)
-			>= sizeof(depfile))
+	if (slen >= sizeof(depfile))
 		return SLBT_BUFFER_ERROR(dctx);
 
-	if (!(ectx->fdeps = fopen(depfile,"w")))
+	/* deps */
+	if ((deps = openat(AT_FDCWD,depfile,O_RDWR|O_CREAT|O_TRUNC,0644)) < 0)
 		return SLBT_SYSTEM_ERROR(dctx);
 
+	/* iterate */
 	for (parg=altv; *parg; parg++) {
-		popt = 0;
-		plib = 0;
-		path = 0;
+		popt    = 0;
+		plib    = 0;
+		path    = 0;
+		mapinfo = 0;
 
 		if (!strcmp(*parg,"-l")) {
 			popt = *parg++;
@@ -683,11 +687,13 @@ static int slbt_exec_link_create_dep_file(
 
 			/* [relative .la directory] */
 			if (base > *parg) {
-				if ((size_t)snprintf(reladir,
-							sizeof(reladir),
-							"%s",*parg)
-						>= sizeof(reladir))
-					return SLBT_SYSTEM_ERROR(dctx);
+				slen = snprintf(reladir,sizeof(reladir),
+					"%s",*parg);
+
+				if (slen >= sizeof(reladir)) {
+					close(deps);
+					return SLBT_BUFFER_ERROR(dctx);
+				}
 
 				reladir[base - *parg - 1] = 0;
 			} else {
@@ -700,29 +706,37 @@ static int slbt_exec_link_create_dep_file(
 			strcpy(depfile,*parg);
 			mark = depfile + (base - *parg);
 			size = sizeof(depfile) - (base - *parg);
+			slen = snprintf(mark,size,".libs/%s",base);
 
-			if ((size_t)snprintf(mark,size,".libs/%s",base)
-					>= size)
+			if (slen >= size) {
+				close(deps);
 				return SLBT_BUFFER_ERROR(dctx);
+			}
 
 			mark = strrchr(mark,'.');
 			strcpy(mark,dctx->cctx->settings.dsosuffix);
 
-			fdeps   = 0;
 			fdyndep = !stat(depfile,&st);
 			fnodeps = farchive && fdyndep;
 
 			/* [-L... as needed] */
 			if (fdyndep && (base > *parg) && (ectx->ldirdepth >= 0)) {
-				if (fputs("-L",ectx->fdeps) < 0)
+				if (slbt_dprintf(deps,"-L") < 0) {
+					close(deps);
 					return SLBT_SYSTEM_ERROR(dctx);
+				}
 
-				for (ldepth=ectx->ldirdepth; ldepth; ldepth--)
-					if (fputs("../",ectx->fdeps) < 0)
+				for (ldepth=ectx->ldirdepth; ldepth; ldepth--) {
+					if (slbt_dprintf(deps,"../") < 0) {
+						close(deps);
 						return SLBT_SYSTEM_ERROR(dctx);
+					}
+				}
 
-				if (fprintf(ectx->fdeps,"%s/.libs\n",reladir) < 0)
+				if (slbt_dprintf(deps,"%s/.libs\n",reladir) < 0) {
+					close(deps);
 					return SLBT_SYSTEM_ERROR(dctx);
+				}
 			}
 
 			/* -ldeplib */
@@ -731,8 +745,10 @@ static int slbt_exec_link_create_dep_file(
 				mark  = base;
 				mark += strlen(dctx->cctx->settings.dsoprefix);
 
-				if (fprintf(ectx->fdeps,"-l%s\n",mark) < 0)
+				if (slbt_dprintf(deps,"-l%s\n",mark) < 0) {
+					close(deps);
 					return SLBT_SYSTEM_ERROR(dctx);
+				}
 
 				*popt = '.';
 			}
@@ -741,81 +757,96 @@ static int slbt_exec_link_create_dep_file(
 			strcpy(depfile,*parg);
 			mark = depfile + (base - *parg);
 			size = sizeof(depfile) - (base - *parg);
+			slen = snprintf(mark,size,".libs/%s",base);
 
-			if ((size_t)snprintf(mark,size,".libs/%s",base)
-					>= size)
+			if (slen >= size) {
+				close(deps);
 				return SLBT_BUFFER_ERROR(dctx);
+			}
 
 			mark = strrchr(mark,'.');
 			size = sizeof(depfile) - (mark - depfile);
 
 			if (!farchive) {
-				if ((size_t)snprintf(
-						mark,size,
-						"%s.slibtool.deps",
-						dctx->cctx->settings.dsosuffix)
-						>= size)
-					return SLBT_BUFFER_ERROR(dctx);
+				slen = snprintf(mark,size,
+					"%s.slibtool.deps",
+					dctx->cctx->settings.dsosuffix);
 
-				if (stat(depfile,&st)) {
-					if (errno != ENOENT)
-						return SLBT_SYSTEM_ERROR(dctx);
-				} else {
-					if (!(fdeps = fopen(depfile,"r")))
-						return SLBT_SYSTEM_ERROR(dctx);
+				if (slen >= size) {
+					close(deps);
+					return SLBT_BUFFER_ERROR(dctx);
+				}
+
+				mapinfo = slbt_map_file(
+					AT_FDCWD,depfile,
+					SLBT_MAP_INPUT);
+
+				if (!mapinfo && (errno != ENOENT)) {
+					close(deps);
+					return SLBT_SYSTEM_ERROR(dctx);
 				}
 			}
 
-			if (!fnodeps && (farchive || !fdeps)) {
-				if ((size_t)snprintf(mark,size,".a.slibtool.deps")
-						>= size)
+			if (!mapinfo && !fnodeps) {
+				slen = snprintf(mark,size,
+					".a.slibtool.deps");
+
+				if (slen >= size) {
+					close(deps);
 					return SLBT_BUFFER_ERROR(dctx);
+				}
 
-				if (stat(depfile,&st))
-					return SLBT_SYSTEM_ERROR(dctx);
+				mapinfo = slbt_map_file(
+					AT_FDCWD,depfile,
+					SLBT_MAP_INPUT);
 
-				if (!(fdeps = fopen(depfile,"r")))
+				if (!mapinfo) {
+					close(deps);
 					return SLBT_SYSTEM_ERROR(dctx);
+				}
 			}
 
 			/* [-l... as needed] */
-			deplib = fdeps && st.st_size
-				? fgets(deplibs,st.st_size+1,fdeps)
-				: 0;
+			while (mapinfo && (mapinfo->mark < mapinfo->cap)) {
+				ret = slbt_mapped_readline(
+					dctx,mapinfo,
+					deplib,sizeof(deplib));
 
-			for (; deplib; ) {
-				if ((deplib[0] == '-') && (deplib[1] == 'L')
-						&& (deplib[2] != '/')) {
-					if (fprintf(ectx->fdeps,"-L%s/%s",
-							reladir,&deplib[2]) < 0) {
-						fclose(fdeps);
-						return SLBT_SYSTEM_ERROR(dctx);
-					}
-				} else {
-					if (fprintf(ectx->fdeps,"%s",deplib) < 0) {
-						fclose(fdeps);
-						return SLBT_SYSTEM_ERROR(dctx);
-					}
+				if (ret) {
+					close(deps);
+					return SLBT_NESTED_ERROR(dctx);
 				}
 
-				deplib = fgets(deplibs,st.st_size+1,fdeps);
+				ret = ((deplib[0] == '-')
+						&& (deplib[1] == 'L')
+						&& (deplib[2] != '/'))
+					? slbt_dprintf(
+						deps,"-L%s/%s",
+						reladir,&deplib[2])
+					: slbt_dprintf(
+						deps,"%s",
+						deplib);
+
+				if (ret < 0) {
+					close(deps);
+					return SLBT_SYSTEM_ERROR(dctx);
+				}
 			}
 
-			if (fdeps)
-				fclose(fdeps);
+			if (mapinfo)
+				slbt_unmap_file(mapinfo);
 		}
 
-		if (plib)
-			if (fprintf(ectx->fdeps,"-l%s\n",plib) < 0)
-				return SLBT_SYSTEM_ERROR(dctx);
+		if (plib && (slbt_dprintf(deps,"-l%s\n",plib) < 0)) {
+			close(deps);
+			return SLBT_SYSTEM_ERROR(dctx);
+		}
 
-		if (path)
-			if (fprintf(ectx->fdeps,"-L%s\n",path) < 0)
-				return SLBT_SYSTEM_ERROR(dctx);
+		if (path && (slbt_dprintf(deps,"-L%s\n",path) < 0)) {
+			close(deps);
+			return SLBT_SYSTEM_ERROR(dctx);
+		}
 	}
-
-	if (fflush(ectx->fdeps))
-		return SLBT_SYSTEM_ERROR(dctx);
 
 	return 0;
 }

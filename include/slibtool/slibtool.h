@@ -150,7 +150,6 @@ struct slbt_exec_ctx {
 	char ** rpath[2];
 	char ** sentinel;
 	FILE *	fwrapper;
-	FILE *	fdeps;
 	char *	csrc;
 	int	ldirdepth;
 	char *	ldirname;
