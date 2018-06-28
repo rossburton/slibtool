@@ -272,7 +272,9 @@ static int slbt_exec_link_adjust_argument_vector(
 	argc += depsmeta->depscnt;
 
 	if (!(depsmeta->altv = calloc(argc,sizeof(char *))))
-		return SLBT_SYSTEM_ERROR(dctx);
+		return slbt_exec_link_exit(
+			depsmeta,
+			SLBT_SYSTEM_ERROR(dctx));
 
 	carg = ectx->cargv;
 	aarg = depsmeta->altv;
@@ -352,7 +354,9 @@ static int slbt_exec_link_adjust_argument_vector(
 						rpathlnk,\
 						rpathdir,
 						sizeof(rpathdir)))
-					return SLBT_SYSTEM_ERROR(dctx);
+					return slbt_exec_link_exit(
+						depsmeta,
+						SLBT_SYSTEM_ERROR(dctx));
 
 				sprintf(darg,"-Wl,%s",rpathdir);
 				*aarg++ = "-Wl,-rpath";
@@ -366,9 +370,12 @@ static int slbt_exec_link_adjust_argument_vector(
 			sprintf(lib,"%s.slibtool.deps",*carg);
 
 			/* account for {'-','L','-','l'} */
-			if ((size_t)snprintf(arg,sizeof(arg),"%s",
-					*carg) >= (sizeof(arg) - 4))
-				return SLBT_BUFFER_ERROR(dctx);
+			if ((size_t)snprintf(arg,sizeof(arg),
+						"%s",*carg)
+					>= (sizeof(arg) - 4))
+				return slbt_exec_link_exit(
+					depsmeta,
+					SLBT_BUFFER_ERROR(dctx));
 
 			if ((slash = strrchr(arg,'/'))) {
 				sprintf(*carg,"-L%s",arg);
@@ -383,7 +390,9 @@ static int slbt_exec_link_adjust_argument_vector(
 							"DL_PATH=\"$DL_PATH$COLON%s/%s\"\n"
 							"COLON=':'\n\n",
 							cwd,arg) < 0)
-						return SLBT_SYSTEM_ERROR(dctx);
+						return slbt_exec_link_exit(
+							depsmeta,
+							SLBT_SYSTEM_ERROR(dctx));
 				}
 
 				*aarg++ = *carg++;
@@ -440,7 +449,9 @@ static int slbt_exec_link_adjust_argument_vector(
 							&& (mark[1] == 'L')
 							&& (mark[2] != '/')) {
 						if (strlen(mark) >= sizeof(depdir) - 1)
-							return SLBT_BUFFER_ERROR(dctx);
+							return slbt_exec_link_exit(
+								depsmeta,
+								SLBT_BUFFER_ERROR(dctx));
 
 						darg = mark;
 						strcpy(depdir,&mark[2]);
@@ -457,14 +468,20 @@ static int slbt_exec_link_adjust_argument_vector(
 					free(depsmeta->altv);
 					free(depsmeta->args);
 					fclose(fdeps);
-					return SLBT_FILE_ERROR(dctx);
+
+					return slbt_exec_link_exit(
+						depsmeta,
+						SLBT_FILE_ERROR(dctx));
 				} else {
 					fclose(fdeps);
 				}
 			} else if (freqd) {
 				free(depsmeta->altv);
 				free(depsmeta->args);
-				return SLBT_CUSTOM_ERROR(dctx,SLBT_ERR_LINK_FREQ);
+
+				return slbt_exec_link_exit(
+					depsmeta,
+					SLBT_CUSTOM_ERROR(dctx,SLBT_ERR_LINK_FREQ));
 			}
 		}
 	}
