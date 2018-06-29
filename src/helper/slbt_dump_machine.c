@@ -56,7 +56,7 @@ int slbt_dump_machine(
 	char	program[PATH_MAX];
 
 	/* setup */
-	if (!machine || !--buflen) {
+	if (!machine || !buflen || !--buflen) {
 		errno = EINVAL;
 		return -1;
 	}
