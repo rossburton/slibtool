@@ -99,6 +99,17 @@ struct slbt_driver_ctx_impl {
 	struct slbt_error_info	erribuf[64];
 };
 
+struct slbt_exec_ctx_impl {
+	int			argc;
+	char *			args;
+	char *			shadow;
+	char *			dsoprefix;
+	size_t			size;
+	struct slbt_exec_ctx	ctx;
+	int			fdwrapper;
+	char *			vbuffer[];
+};
+
 static inline struct slbt_driver_ctx_impl * slbt_get_driver_ictx(const struct slbt_driver_ctx * dctx)
 {
 	uintptr_t addr;
@@ -137,6 +148,36 @@ static inline int slbt_driver_fdlog(const struct slbt_driver_ctx * dctx)
 	struct slbt_fd_ctx fdctx;
 	slbt_get_driver_fdctx(dctx,&fdctx);
 	return fdctx.fdlog;
+}
+
+static inline struct slbt_exec_ctx_impl * slbt_get_exec_ictx(const struct slbt_exec_ctx * ectx)
+{
+	uintptr_t addr;
+
+	addr = (uintptr_t)ectx - offsetof(struct slbt_exec_ctx_impl,ctx);
+	return (struct slbt_exec_ctx_impl *)addr;
+}
+
+static inline int slbt_exec_get_fdwrapper(const struct slbt_exec_ctx * ectx)
+{
+	struct slbt_exec_ctx_impl * ictx;
+	ictx = slbt_get_exec_ictx(ectx);
+	return ictx->fdwrapper;
+}
+
+static inline void slbt_exec_set_fdwrapper(const struct slbt_exec_ctx * ectx, int fd)
+{
+	struct slbt_exec_ctx_impl * ictx;
+	ictx = slbt_get_exec_ictx(ectx);
+	ictx->fdwrapper = fd;
+}
+
+static inline void slbt_exec_close_fdwrapper(const struct slbt_exec_ctx * ectx)
+{
+	struct slbt_exec_ctx_impl * ictx;
+	ictx = slbt_get_exec_ictx(ectx);
+	close(ictx->fdwrapper);
+	ictx->fdwrapper = (-1);
 }
 
 #endif

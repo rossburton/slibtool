@@ -10,20 +10,10 @@
 #include <string.h>
 
 #include <slibtool/slibtool.h>
+#include "slibtool_driver_impl.h"
 #include "slibtool_errinfo_impl.h"
 
 #define SLBT_ARGV_SPARE_PTRS	16
-
-struct slbt_exec_ctx_impl {
-	int			argc;
-	char *			args;
-	char *			shadow;
-	char *			dsoprefix;
-	size_t			size;
-	struct slbt_exec_ctx	ctx;
-	char *			vbuffer[];
-};
-
 
 static size_t slbt_parse_comma_separated_flags(
 	const char *	str,
@@ -135,7 +125,8 @@ static struct slbt_exec_ctx_impl * slbt_exec_ctx_alloc(
 	ictx->size   = size;
 	ictx->shadow = shadow;
 
-	ictx->ctx.csrc = csrc;
+	ictx->ctx.csrc  = csrc;
+	ictx->fdwrapper = (-1);
 
 	return ictx;
 }
@@ -470,12 +461,13 @@ static int slbt_free_exec_ctx_impl(
 	struct slbt_exec_ctx_impl *	ictx,
 	int				status)
 {
-	if (ictx->ctx.fwrapper)
-		fclose(ictx->ctx.fwrapper);
+	if (ictx->fdwrapper >= 0)
+		close(ictx->fdwrapper);
 
 	free(ictx->args);
 	free(ictx->shadow);
 	free (ictx);
+
 	return status;
 }
 
