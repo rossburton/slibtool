@@ -4,6 +4,15 @@ mb_require_out_of_tree=no
 mb_custom_install_headers=no
 mb_avoid_version=no
 
+# pkgconfig
+mb_pkgname='slibtool'
+mb_pkgdesc='a surrogate libtool implementation, written in C'
+mb_pkgusrc='https://dl.midipix.org/slibtool/'
+mb_pkgrepo='git://midipix.org/slibtool'
+mb_pkgpsrc=
+mb_pkgdurl=
+mb_pkgdefs=
+mb_pkglibs=
 
 # build
 mb_default_build=
