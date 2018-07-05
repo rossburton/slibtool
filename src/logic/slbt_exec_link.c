@@ -132,7 +132,7 @@ static int slbt_get_deps_meta(
 	cap = mapinfo->cap;
 
 	for (; ch<cap; ) {
-		if (*ch++ == 'n') {
+		if (*ch++ == '\n') {
 			depsmeta->infolen += libexlen;
 			depsmeta->depscnt++;
 		}
