@@ -1,3 +1,26 @@
+0.5.21:
+
+This patch release follows important enhancements in slibtool's library
+interfaces and API contract. In particular, slibtool now no longer uses
+streams, but rather pure file descriptors. In addition, i/o operations
+now robustly handle interruption by signals, and thus do not depend on
+the underlying system calls being restartable. Last but not least,
+slibtool now installs a pkgconfig configuration file when applicable.
+
+- argv.h: output usage and errors using [argv_]dprintf rather than fprint.
+- argv.h: argv_get(): be consistent between forward decl. and impl.
+- argv.h: move definition of struct argv_meta_impl to the implementation block.
+- internals: added slbt_mapped_readline().
+- internals: added slbt_map_file(), slbt_unmap_file().
+- internals: added slbt_dprintf(), a signal-resilient dprintf implementation.
+- driver: argv usage and error output: use the signal-resilient slbt_dprintf().
+- driver: support alternate fd's for input/output/error/log.
+- driver: slbt_init_host_params(): propagate failure of <compiler> -dumpmachine.
+- driver: slbt_init_host_params(): do not set fnative when !fdumpmachine.
+- driver: struct slbt_fd_ctx: added .fdcwd and .fddst.
+- library: invocations of openat() now use the context's fdcwd.
+- project: added initial pkgconfig support.
+
 0.5.20:
 
 This patch release includes several important bug fixes pertaining to both
