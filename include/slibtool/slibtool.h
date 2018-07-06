@@ -128,6 +128,8 @@ struct slbt_fd_ctx {
 	int	fdout;
 	int	fderr;
 	int	fdlog;
+	int	fdcwd;
+	int	fddst;
 };
 
 struct slbt_exec_ctx {

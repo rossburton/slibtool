@@ -150,6 +150,20 @@ static inline int slbt_driver_fdlog(const struct slbt_driver_ctx * dctx)
 	return fdctx.fdlog;
 }
 
+static inline int slbt_driver_fdcwd(const struct slbt_driver_ctx * dctx)
+{
+	struct slbt_fd_ctx fdctx;
+	slbt_get_driver_fdctx(dctx,&fdctx);
+	return fdctx.fdcwd;
+}
+
+static inline int slbt_driver_fddst(const struct slbt_driver_ctx * dctx)
+{
+	struct slbt_fd_ctx fdctx;
+	slbt_get_driver_fdctx(dctx,&fdctx);
+	return fdctx.fddst;
+}
+
 static inline struct slbt_exec_ctx_impl * slbt_get_exec_ictx(const struct slbt_exec_ctx * ectx)
 {
 	uintptr_t addr;

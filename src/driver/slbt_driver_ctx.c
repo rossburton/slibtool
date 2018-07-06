@@ -932,7 +932,9 @@ int slbt_get_driver_ctx(
 			.fdin  = STDIN_FILENO,
 			.fdout = STDOUT_FILENO,
 			.fderr = STDERR_FILENO,
-			.fdlog = (-1)
+			.fdlog = (-1),
+			.fdcwd = AT_FDCWD,
+			.fddst = AT_FDCWD,
 		};
 	}
 
@@ -1298,7 +1300,9 @@ int slbt_create_driver_ctx(
 			.fdin  = STDIN_FILENO,
 			.fdout = STDOUT_FILENO,
 			.fderr = STDERR_FILENO,
-			.fdlog = (-1)
+			.fdlog = (-1),
+			.fdcwd = AT_FDCWD,
+			.fddst = AT_FDCWD,
 		};
 	}
 
@@ -1419,6 +1423,8 @@ int slbt_get_driver_fdctx(
 	fdctx->fdout = ictx->fdctx.fdout;
 	fdctx->fderr = ictx->fdctx.fderr;
 	fdctx->fdlog = ictx->fdctx.fdlog;
+	fdctx->fdcwd = ictx->fdctx.fdcwd;
+	fdctx->fddst = ictx->fdctx.fddst;
 
 	return 0;
 }
@@ -1435,6 +1441,8 @@ int slbt_set_driver_fdctx(
 	ictx->fdctx.fdout = fdctx->fdout;
 	ictx->fdctx.fderr = fdctx->fderr;
 	ictx->fdctx.fdlog = fdctx->fdlog;
+	ictx->fdctx.fdcwd = fdctx->fdcwd;
+	ictx->fdctx.fddst = fdctx->fddst;
 
 	return 0;
 }
