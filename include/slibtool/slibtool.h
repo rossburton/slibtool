@@ -26,7 +26,7 @@ extern "C" {
 #define SLBT_ERROR			0x02
 
 /* driver flags */
-#define SLBT_DRIVER_XFLAG(x)		((uint64_t)x << 32)
+#define SLBT_DRIVER_XFLAG(x)		((uint64_t)(x) << 32)
 
 #define SLBT_DRIVER_VERBOSITY_NONE	0x0000
 #define SLBT_DRIVER_VERBOSITY_ERRORS	0x0001
