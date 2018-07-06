@@ -86,6 +86,7 @@ static int slbt_get_deps_meta(
 	char *			libfilename,
 	struct slbt_deps_meta *	depsmeta)
 {
+	int			fdcwd;
 	char *			ch;
 	char *			cap;
 	char *			base;
@@ -114,8 +115,11 @@ static int slbt_get_deps_meta(
 			>= sizeof(depfile))
 		return SLBT_BUFFER_ERROR(dctx);
 
+	/* fdcwd */
+	fdcwd = slbt_driver_fdcwd(dctx);
+
 	/* mapinfo */
-	if (!(mapinfo = slbt_map_file(AT_FDCWD,depfile,SLBT_MAP_INPUT)))
+	if (!(mapinfo = slbt_map_file(fdcwd,depfile,SLBT_MAP_INPUT)))
 		return SLBT_SYSTEM_ERROR(dctx);
 
 	/* copied length */
@@ -244,6 +248,7 @@ static int slbt_exec_link_adjust_argument_vector(
 {
 	int			fd;
 	int			fdwrap;
+	int			fdcwd;
 	char ** 		carg;
 	char ** 		aarg;
 	char *			ldir;
@@ -278,6 +283,8 @@ static int slbt_exec_link_adjust_argument_vector(
 		return slbt_exec_link_exit(
 			depsmeta,
 			SLBT_SYSTEM_ERROR(dctx));
+
+	fdcwd = slbt_driver_fdcwd(dctx);
 
 	carg = ectx->cargv;
 	aarg = depsmeta->altv;
@@ -413,7 +420,7 @@ static int slbt_exec_link_adjust_argument_vector(
 
 		if (dpath && !stat(dpath,&st)) {
 			if (!(mapinfo = slbt_map_file(
-					AT_FDCWD,dpath,
+					fdcwd,dpath,
 					SLBT_MAP_INPUT)))
 				return slbt_exec_link_exit(
 					depsmeta,
@@ -618,6 +625,7 @@ static int slbt_exec_link_create_dep_file(
 {
 	int			ret;
 	int			deps;
+	int			fdcwd;
 	char **			parg;
 	char *			popt;
 	char *			plib;
@@ -635,6 +643,9 @@ static int slbt_exec_link_create_dep_file(
 	int			fnodeps;
 	struct slbt_map_info *  mapinfo;
 
+	/* fdcwd */
+	fdcwd = slbt_driver_fdcwd(dctx);
+
 	/* depfile */
 	slen = snprintf(depfile,sizeof(depfile),
 		"%s.slibtool.deps",
@@ -644,7 +655,7 @@ static int slbt_exec_link_create_dep_file(
 		return SLBT_BUFFER_ERROR(dctx);
 
 	/* deps */
-	if ((deps = openat(AT_FDCWD,depfile,O_RDWR|O_CREAT|O_TRUNC,0644)) < 0)
+	if ((deps = openat(fdcwd,depfile,O_RDWR|O_CREAT|O_TRUNC,0644)) < 0)
 		return SLBT_SYSTEM_ERROR(dctx);
 
 	/* iterate */
@@ -780,7 +791,7 @@ static int slbt_exec_link_create_dep_file(
 				}
 
 				mapinfo = slbt_map_file(
-					AT_FDCWD,depfile,
+					fdcwd,depfile,
 					SLBT_MAP_INPUT);
 
 				if (!mapinfo && (errno != ENOENT)) {
@@ -799,7 +810,7 @@ static int slbt_exec_link_create_dep_file(
 				}
 
 				mapinfo = slbt_map_file(
-					AT_FDCWD,depfile,
+					fdcwd,depfile,
 					SLBT_MAP_INPUT);
 
 				if (!mapinfo) {
@@ -1261,6 +1272,7 @@ static int slbt_exec_link_create_executable(
 	struct slbt_exec_ctx *		ectx,
 	const char *			exefilename)
 {
+	int	fdcwd;
 	int	fdwrap;
 	char ** parg;
 	char *	base;
@@ -1278,6 +1290,9 @@ static int slbt_exec_link_create_executable(
 
 	/* placeholders */
 	slbt_reset_placeholders(ectx);
+
+	/* fdcwd */
+	fdcwd = slbt_driver_fdcwd(dctx);
 
 	/* fpic */
 	fpic = !(dctx->cctx->drvflags & SLBT_DRIVER_ALL_STATIC);
@@ -1307,7 +1322,7 @@ static int slbt_exec_link_create_executable(
 			>= sizeof(wrapper))
 		return SLBT_BUFFER_ERROR(dctx);
 
-	if ((fdwrap = openat(AT_FDCWD,wrapper,O_RDWR|O_CREAT|O_TRUNC,0644)) < 0)
+	if ((fdwrap = openat(fdcwd,wrapper,O_RDWR|O_CREAT|O_TRUNC,0644)) < 0)
 		return SLBT_SYSTEM_ERROR(dctx);
 
 	slbt_exec_set_fdwrapper(ectx,fdwrap);

@@ -226,6 +226,7 @@ static int slbt_exec_install_library_wrapper(
 	struct argv_entry *		entry,
 	char *				dstdir)
 {
+	int			fdcwd;
 	int			fddst;
 	size_t			buflen;
 	const char *		base;
@@ -252,12 +253,15 @@ static int slbt_exec_install_library_wrapper(
 			entry->arg) >= sizeof(clainame))
 		return SLBT_BUFFER_ERROR(dctx);
 
+	/* fdcwd */
+	fdcwd = slbt_driver_fdcwd(dctx);
+
 	/* fddst (libfoo.la.slibtool.install, build directory) */
-	if ((fddst = openat(AT_FDCWD,clainame,O_RDWR|O_CREAT|O_TRUNC,0644)) < 0)
+	if ((fddst = openat(fdcwd,clainame,O_RDWR|O_CREAT|O_TRUNC,0644)) < 0)
 		return SLBT_SYSTEM_ERROR(dctx);
 
 	/* mapinfo (libfoo.la, build directory) */
-	if (!(mapinfo = slbt_map_file(AT_FDCWD,entry->arg,SLBT_MAP_INPUT))) {
+	if (!(mapinfo = slbt_map_file(fdcwd,entry->arg,SLBT_MAP_INPUT))) {
 		close(fddst);
 		return SLBT_SYSTEM_ERROR(dctx);
 	}

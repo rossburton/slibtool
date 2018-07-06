@@ -7,6 +7,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <slibtool/slibtool.h>
+#include "slibtool_driver_impl.h"
 #include "slibtool_dprintf_impl.h"
 #include "slibtool_errinfo_impl.h"
 #include "slibtool_metafile_impl.h"
@@ -20,7 +21,7 @@ static int  slbt_create_default_object_wrapper(
 	const struct slbt_source_version *	verinfo;
 
 	if ((fdout = openat(
-			AT_FDCWD,
+			slbt_driver_fdcwd(dctx),
 			ectx->ltobjname,
 			O_RDWR|O_CREAT|O_TRUNC,
 			0644)) < 0)
@@ -61,7 +62,7 @@ static int  slbt_create_compatible_object_wrapper(
 	const struct slbt_source_version *	verinfo;
 
 	if ((fdout = openat(
-			AT_FDCWD,
+			slbt_driver_fdcwd(dctx),
 			ectx->ltobjname,
 			O_RDWR|O_CREAT|O_TRUNC,
 			0644)) < 0)
