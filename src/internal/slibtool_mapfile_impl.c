@@ -1,3 +1,9 @@
+/*******************************************************************/
+/*  slibtool: a skinny libtool implementation, written in C        */
+/*  Copyright (C) 2016--2018  Z. Gilboa                            */
+/*  Released under the Standard MIT License; see COPYING.SLIBTOOL. */
+/*******************************************************************/
+
 #ifndef _POSIX_C_SOURCE
 #define _POSIX_C_SOURCE 200809L
 #endif
