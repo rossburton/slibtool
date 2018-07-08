@@ -1,3 +1,8 @@
+0.5.24:
+
+This patch release explicitly requests definition of AT_FDCWD via definition
+of _POSIX_C_SOURCE in translation units that refer to it.
+
 0.5.23:
 
 This patch releases fixes a couple of minor issues in slibtool's own build
