@@ -1,3 +1,8 @@
+0.5.22:
+
+This patch release explicitly requests the openat() interface via definition
+of _POSIX_C_SOURCE in translation units that need it.
+
 0.5.21:
 
 This patch release follows important enhancements in slibtool's library
