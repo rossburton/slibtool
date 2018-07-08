@@ -337,7 +337,7 @@ static int slbt_exec_install_entry(
 	char		dstfile [PATH_MAX];
 	char		slnkname[PATH_MAX];
 	char		dlnkname[PATH_MAX];
-	char		lasource[PATH_MAX];
+	char		lasource[PATH_MAX - 8];
 	bool		fexe = false;
 	bool		fpe;
 	bool		frelease;
