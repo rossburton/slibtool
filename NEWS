@@ -1,3 +1,11 @@
+0.5.23:
+
+This patch releases fixes a couple of minor issues in slibtool's own build
+system.
+
+build system: all-shared front-end variant: fix ordering of -l$(PACKAGE).
+build system: all-shared binary: added missing build-dep on $(SHARED_SOLINK).
+
 0.5.22:
 
 This patch release explicitly requests the openat() interface via definition
