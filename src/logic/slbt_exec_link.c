@@ -207,6 +207,12 @@ static int slbt_adjust_linker_argument(
 	if (!(dot = strrchr(arg,'.')))
 		return 0;
 
+	if (!(strcmp(dot,arsuffix)))
+		return slbt_get_deps_meta(dctx,arg,depsmeta);
+
+	if (!(strcmp(dot,dsosuffix)))
+		return slbt_get_deps_meta(dctx,arg,depsmeta);
+
 	if (strcmp(dot,".la"))
 		return 0;
 
