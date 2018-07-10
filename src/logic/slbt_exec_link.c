@@ -192,11 +192,11 @@ static bool slbt_adjust_input_argument(
 
 static int slbt_adjust_linker_argument(
 	const struct slbt_driver_ctx *	dctx,
-	char *		arg,
-	bool		fpic,
-	const char *	dsosuffix,
-	const char *	arsuffix,
-	struct slbt_deps_meta * depsmeta)
+	char *				arg,
+	bool				fpic,
+	const char *			dsosuffix,
+	const char *			arsuffix,
+	struct slbt_deps_meta * 	depsmeta)
 {
 	int	fdlib;
 	char *	slash;
@@ -630,10 +630,10 @@ static int slbt_exec_link_remove_file(
 
 static int slbt_exec_link_create_dep_file(
 	const struct slbt_driver_ctx *	dctx,
-	struct slbt_exec_ctx *	ectx,
-	char **			altv,
-	const char *		libfilename,
-	bool			farchive)
+	struct slbt_exec_ctx *		ectx,
+	char **				altv,
+	const char *			libfilename,
+	bool				farchive)
 {
 	int			ret;
 	int			deps;
