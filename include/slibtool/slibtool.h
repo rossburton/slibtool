@@ -136,6 +136,7 @@ struct slbt_exec_ctx {
 	char *	program;
 	char *	compiler;
 	char **	cargv;
+	char **	xargv;
 	char **	argv;
 	char **	envp;
 	char ** altv;

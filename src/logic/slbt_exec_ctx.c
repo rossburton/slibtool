@@ -110,8 +110,13 @@ static struct slbt_exec_ctx_impl * slbt_exec_ctx_alloc(
 		return 0;
 	}
 
+	/* ictx, argv, xargv */
+	vsize  = sizeof(*ictx);
+	vsize += sizeof(char *) * (argc + 1);
+	vsize += sizeof(char *) * (argc + 1);
+
 	/* altv: duplicate set, -Wl,--whole-archive, -Wl,--no-whole-archive */
-	vsize = sizeof(*ictx) + 4*(argc+1)*sizeof(char *);
+	vsize += sizeof(char *) * (argc + 1) * 3;
 
 	if (!(ictx = calloc(1,vsize))) {
 		free(args);
@@ -155,7 +160,8 @@ int  slbt_get_exec_ctx(
 	/* init with guard for later .lo check */
 	ch                = ictx->args + strlen(".lo");
 	ictx->ctx.argv    = ictx->vbuffer;
-	ictx->ctx.altv    = &ictx->vbuffer[ictx->argc + 1];
+	ictx->ctx.xargv   = &ictx->ctx.argv [ictx->argc + 1];
+	ictx->ctx.altv    = &ictx->ctx.xargv[ictx->argc + 1];
 
 	/* <compiler> */
 	ictx->ctx.compiler = dctx->cctx->cargv[0];

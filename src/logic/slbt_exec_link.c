@@ -193,6 +193,7 @@ static bool slbt_adjust_input_argument(
 static int slbt_adjust_linker_argument(
 	const struct slbt_driver_ctx *	dctx,
 	char *				arg,
+	char **				xarg,
 	bool				fpic,
 	const char *			dsosuffix,
 	const char *			arsuffix,
@@ -209,8 +210,10 @@ static int slbt_adjust_linker_argument(
 	if (!(dot = strrchr(arg,'.')))
 		return 0;
 
-	if (!(strcmp(dot,arsuffix)))
+	if (!(strcmp(dot,arsuffix))) {
+		*xarg = arg;
 		return slbt_get_deps_meta(dctx,arg,1,depsmeta);
+	}
 
 	if (!(strcmp(dot,dsosuffix)))
 		return slbt_get_deps_meta(dctx,arg,1,depsmeta);
@@ -348,6 +351,9 @@ static int slbt_exec_link_adjust_argument_vector(
 			*aarg++ = *carg++;
 
 		} else if (!(dot = strrchr(*carg,'.'))) {
+			*aarg++ = *carg++;
+
+		} else if (ectx->xargv[carg - ectx->cargv]) {
 			*aarg++ = *carg++;
 
 		} else if (!(strcmp(dot,".a"))) {
@@ -1120,6 +1126,7 @@ static int slbt_exec_link_create_library(
 	const char *			relfilename)
 {
 	char ** parg;
+	char ** xarg;
 	char	cwd    [PATH_MAX];
 	char	output [PATH_MAX];
 	char	soname [PATH_MAX];
@@ -1145,10 +1152,10 @@ static int slbt_exec_link_create_library(
 			SLBT_NESTED_ERROR(dctx));
 
 	/* linker argument adjustment */
-	for (parg=ectx->cargv; *parg; parg++)
+	for (parg=ectx->cargv, xarg=ectx->xargv; *parg; parg++, xarg++)
 		if (slbt_adjust_linker_argument(
 				dctx,
-				*parg,true,
+				*parg,xarg,true,
 				dctx->cctx->settings.dsosuffix,
 				dctx->cctx->settings.arsuffix,
 				&depsmeta) < 0)
@@ -1287,6 +1294,7 @@ static int slbt_exec_link_create_executable(
 	int	fdcwd;
 	int	fdwrap;
 	char ** parg;
+	char ** xarg;
 	char *	base;
 	char	cwd    [PATH_MAX];
 	char	output [PATH_MAX];
@@ -1314,10 +1322,10 @@ static int slbt_exec_link_create_executable(
 		slbt_adjust_input_argument(*parg,".lo",".o",fpic);
 
 	/* linker argument adjustment */
-	for (parg=ectx->cargv; *parg; parg++)
+	for (parg=ectx->cargv, xarg=ectx->xargv; *parg; parg++, xarg++)
 		if (slbt_adjust_linker_argument(
 				dctx,
-				*parg,true,
+				*parg,xarg,true,
 				dctx->cctx->settings.dsosuffix,
 				dctx->cctx->settings.arsuffix,
 				&depsmeta) < 0)
