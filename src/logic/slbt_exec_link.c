@@ -246,7 +246,7 @@ static int slbt_adjust_linker_argument(
 
 	/* input archive */
 	sprintf(dot,"%s",arsuffix);
-	return 0;
+	return slbt_get_deps_meta(dctx,arg,depsmeta);
 }
 
 static int slbt_exec_link_adjust_argument_vector(
