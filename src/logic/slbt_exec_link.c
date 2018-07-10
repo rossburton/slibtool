@@ -87,8 +87,9 @@ static int slbt_exec_link_exit(
 
 static int slbt_get_deps_meta(
 	const struct slbt_driver_ctx *	dctx,
-	char *			libfilename,
-	struct slbt_deps_meta *	depsmeta)
+	char *				libfilename,
+	int				fexternal,
+	struct slbt_deps_meta *		depsmeta)
 {
 	int			fdcwd;
 	char *			ch;
@@ -124,7 +125,8 @@ static int slbt_get_deps_meta(
 
 	/* mapinfo */
 	if (!(mapinfo = slbt_map_file(fdcwd,depfile,SLBT_MAP_INPUT)))
-		return SLBT_SYSTEM_ERROR(dctx);
+		return (fexternal && (errno == ENOENT))
+			? 0 : SLBT_SYSTEM_ERROR(dctx);
 
 	/* copied length */
 	depsmeta->infolen += mapinfo->size;
@@ -208,10 +210,10 @@ static int slbt_adjust_linker_argument(
 		return 0;
 
 	if (!(strcmp(dot,arsuffix)))
-		return slbt_get_deps_meta(dctx,arg,depsmeta);
+		return slbt_get_deps_meta(dctx,arg,1,depsmeta);
 
 	if (!(strcmp(dot,dsosuffix)))
-		return slbt_get_deps_meta(dctx,arg,depsmeta);
+		return slbt_get_deps_meta(dctx,arg,1,depsmeta);
 
 	if (strcmp(dot,".la"))
 		return 0;
@@ -241,12 +243,12 @@ static int slbt_adjust_linker_argument(
 		else
 			sprintf(dot,"%s",arsuffix);
 
-		return slbt_get_deps_meta(dctx,arg,depsmeta);
+		return slbt_get_deps_meta(dctx,arg,0,depsmeta);
 	}
 
 	/* input archive */
 	sprintf(dot,"%s",arsuffix);
-	return slbt_get_deps_meta(dctx,arg,depsmeta);
+	return slbt_get_deps_meta(dctx,arg,0,depsmeta);
 }
 
 static int slbt_exec_link_adjust_argument_vector(
