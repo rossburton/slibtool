@@ -29,7 +29,7 @@ const struct argv_option slbt_default_options[] = {
 				"do not make any changes to the file system"},
 
 	{"tag",			0,TAG_TAG,ARGV_OPTARG_REQUIRED,0,
-				"CC|CXX|NASM|disable-static|disable-shared",0,
+				"CC|CXX|NASM|RC|disable-static|disable-shared",0,
 				"a universal playground game; "
 				"currently accepted tags are {%s}"},
 
