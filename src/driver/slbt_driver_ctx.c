@@ -457,9 +457,12 @@ static int slbt_init_host_params(
 	else
 		base = cctx->cargv[0];
 
-	fdumpmachine =  (cctx->mode == SLBT_MODE_COMPILE)
+	fdumpmachine  = (cctx->mode == SLBT_MODE_COMPILE)
 			|| (cctx->mode == SLBT_MODE_LINK)
 			|| (cctx->mode == SLBT_MODE_INFO);
+
+	fdumpmachine &= (!strcmp(base,"xgcc")
+			|| !strcmp(base,"xg++"));
 
 	/* support the portbld <--> unknown synonym */
 	if (!(drvhost->machine = strdup(SLBT_MACHINE)))
