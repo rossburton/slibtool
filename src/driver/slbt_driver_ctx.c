@@ -321,15 +321,13 @@ static int slbt_split_argv(
 
 			if (argv[i][2] == 0)
 				*targv++ = argv[++i];
-		}
-
-		else if ((argv[i][1] == 'W')  && (argv[i][2] == 'c'))
+		} else if ((argv[i][1] == 'W')  && (argv[i][2] == 'c')) {
 			*cargv++ = argv[i];
 
-		else if (!(strcmp("Xcompiler",&argv[i][1])))
+		} else if (!(strcmp("Xcompiler",&argv[i][1]))) {
 			*cargv++ = argv[++i];
 
-		else if ((argv[i][1] == 'R')  && (argv[i][2] == 0)) {
+		} else if ((argv[i][1] == 'R')  && (argv[i][2] == 0)) {
 			*targv++ = argv[i++];
 			*targv++ = argv[i];
 
