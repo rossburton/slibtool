@@ -34,11 +34,12 @@ int  slbt_exec_compile(
 	const struct slbt_driver_ctx *	dctx,
 	struct slbt_exec_ctx *		ectx)
 {
-	int			ret;
-	struct slbt_exec_ctx *	actx = 0;
+	int				ret;
+	struct slbt_exec_ctx *		actx = 0;
+	const struct slbt_common_ctx *	cctx = dctx->cctx;
 
 	/* dry run */
-	if (dctx->cctx->drvflags & SLBT_DRIVER_DRY_RUN)
+	if (cctx->drvflags & SLBT_DRIVER_DRY_RUN)
 		return 0;
 
 	/* context */
@@ -54,7 +55,7 @@ int  slbt_exec_compile(
 		return SLBT_NESTED_ERROR(dctx);
 
 	/* .libs directory */
-	if (dctx->cctx->drvflags & SLBT_DRIVER_SHARED)
+	if (cctx->drvflags & SLBT_DRIVER_SHARED)
 		if (slbt_mkdir(ectx->ldirname)) {
 			slbt_free_exec_ctx(actx);
 			return SLBT_SYSTEM_ERROR(dctx);
@@ -65,18 +66,18 @@ int  slbt_exec_compile(
 	ectx->argv    = ectx->cargv;
 
 	/* shared library object */
-	if (dctx->cctx->drvflags & SLBT_DRIVER_SHARED) {
-		if (!(dctx->cctx->drvflags & SLBT_DRIVER_ANTI_PIC))
+	if (cctx->drvflags & SLBT_DRIVER_SHARED) {
+		if (!(cctx->drvflags & SLBT_DRIVER_ANTI_PIC))
 			*ectx->dpic = "-DPIC";
 
-		if (!(dctx->cctx->drvflags & SLBT_DRIVER_ANTI_PIC))
-			if (dctx->cctx->settings.picswitch)
-				*ectx->fpic = dctx->cctx->settings.picswitch;
+		if (!(cctx->drvflags & SLBT_DRIVER_ANTI_PIC))
+			if (cctx->settings.picswitch)
+				*ectx->fpic = cctx->settings.picswitch;
 
 		*ectx->lout[0] = "-o";
 		*ectx->lout[1] = ectx->lobjname;
 
-		if (!(dctx->cctx->drvflags & SLBT_DRIVER_SILENT)) {
+		if (!(cctx->drvflags & SLBT_DRIVER_SILENT)) {
 			if (slbt_output_compile(dctx,ectx)) {
 				slbt_free_exec_ctx(actx);
 				return SLBT_NESTED_ERROR(dctx);
@@ -90,20 +91,20 @@ int  slbt_exec_compile(
 	}
 
 	/* static archive object */
-	if (dctx->cctx->drvflags & SLBT_DRIVER_STATIC) {
+	if (cctx->drvflags & SLBT_DRIVER_STATIC) {
 		slbt_reset_placeholders(ectx);
 
-		if (dctx->cctx->drvflags & SLBT_DRIVER_PRO_PIC)
+		if (cctx->drvflags & SLBT_DRIVER_PRO_PIC)
 			*ectx->dpic = "-DPIC";
 
-		if (dctx->cctx->drvflags & SLBT_DRIVER_PRO_PIC)
-			if (dctx->cctx->settings.picswitch)
-				*ectx->fpic = dctx->cctx->settings.picswitch;
+		if (cctx->drvflags & SLBT_DRIVER_PRO_PIC)
+			if (cctx->settings.picswitch)
+				*ectx->fpic = cctx->settings.picswitch;
 
 		*ectx->lout[0] = "-o";
 		*ectx->lout[1] = ectx->aobjname;
 
-		if (!(dctx->cctx->drvflags & SLBT_DRIVER_SILENT)) {
+		if (!(cctx->drvflags & SLBT_DRIVER_SILENT)) {
 			if (slbt_output_compile(dctx,ectx)) {
 				slbt_free_exec_ctx(actx);
 				return SLBT_NESTED_ERROR(dctx);
