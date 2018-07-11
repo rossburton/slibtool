@@ -35,6 +35,7 @@ int  slbt_exec_compile(
 	struct slbt_exec_ctx *		ectx)
 {
 	int				ret;
+	char *				fpic;
 	struct slbt_exec_ctx *		actx = 0;
 	const struct slbt_common_ctx *	cctx = dctx->cctx;
 
@@ -65,14 +66,19 @@ int  slbt_exec_compile(
 	ectx->program = ectx->compiler;
 	ectx->argv    = ectx->cargv;
 
+	/* -fpic */
+	fpic = *ectx->fpic;
+
+	if ((cctx->tag == SLBT_TAG_CC) || (cctx->tag == SLBT_TAG_CXX))
+		if (cctx->settings.picswitch)
+			fpic = cctx->settings.picswitch;
+
 	/* shared library object */
 	if (cctx->drvflags & SLBT_DRIVER_SHARED) {
-		if (!(cctx->drvflags & SLBT_DRIVER_ANTI_PIC))
+		if (!(cctx->drvflags & SLBT_DRIVER_ANTI_PIC)) {
 			*ectx->dpic = "-DPIC";
-
-		if (!(cctx->drvflags & SLBT_DRIVER_ANTI_PIC))
-			if (cctx->settings.picswitch)
-				*ectx->fpic = cctx->settings.picswitch;
+			*ectx->fpic = fpic;
+		}
 
 		*ectx->lout[0] = "-o";
 		*ectx->lout[1] = ectx->lobjname;
@@ -94,12 +100,10 @@ int  slbt_exec_compile(
 	if (cctx->drvflags & SLBT_DRIVER_STATIC) {
 		slbt_reset_placeholders(ectx);
 
-		if (cctx->drvflags & SLBT_DRIVER_PRO_PIC)
+		if (cctx->drvflags & SLBT_DRIVER_PRO_PIC) {
 			*ectx->dpic = "-DPIC";
-
-		if (cctx->drvflags & SLBT_DRIVER_PRO_PIC)
-			if (cctx->settings.picswitch)
-				*ectx->fpic = cctx->settings.picswitch;
+			*ectx->fpic = fpic;
+		}
 
 		*ectx->lout[0] = "-o";
 		*ectx->lout[1] = ectx->aobjname;
