@@ -561,6 +561,8 @@ static int slbt_init_host_params(
 			host->flavor = "mingw";
 		else if ((dash && !strcmp(dash,"-mingw64")) || strstr(machine,"-mingw64-"))
 			host->flavor = "mingw";
+		else if ((dash && !strcmp(dash,"-windows")) || strstr(machine,"-windows-"))
+			host->flavor = "mingw";
 		else {
 			host->flavor   = "default";
 			cfgmeta->flavor = "fallback, unverified";
