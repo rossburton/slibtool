@@ -1221,9 +1221,11 @@ static int slbt_exec_link_create_library(
 	/* shared/static */
 	if (dctx->cctx->drvflags & SLBT_DRIVER_ALL_STATIC) {
 		*ectx->dpic = "-static";
+	} else if (dctx->cctx->settings.picswitch) {
+		*ectx->dpic = "-shared";
+		*ectx->fpic = dctx->cctx->settings.picswitch;
 	} else {
 		*ectx->dpic = "-shared";
-		*ectx->fpic = "-fPIC";
 	}
 
 	/* output */

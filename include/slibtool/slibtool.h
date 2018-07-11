@@ -215,6 +215,7 @@ struct slbt_flavor_settings {
 	const char *			impprefix;
 	const char *			impsuffix;
 	const char *			ldpathenv;
+	char *				picswitch;
 };
 
 struct slbt_common_ctx {

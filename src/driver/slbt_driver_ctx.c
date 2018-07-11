@@ -29,15 +29,15 @@ static const struct slbt_source_version slbt_src_version = {
 };
 
 /* flavor settings */
-#define SLBT_FLAVOR_SETTINGS(flavor,bfmt,arp,ars,dsop,dsos,exep,exes,impp,imps,ldenv) \
+#define SLBT_FLAVOR_SETTINGS(flavor,bfmt,pic,arp,ars,dsop,dsos,exep,exes,impp,imps,ldenv) \
 	static const struct slbt_flavor_settings flavor = {		   \
-		bfmt,arp,ars,dsop,dsos,exep,exes,impp,imps,ldenv}
+		bfmt,arp,ars,dsop,dsos,exep,exes,impp,imps,ldenv,pic}
 
-SLBT_FLAVOR_SETTINGS(host_flavor_default, "elf",  "lib",".a", "lib",".so",    "","",     "",   "",       "LD_LIBRARY_PATH");
-SLBT_FLAVOR_SETTINGS(host_flavor_midipix, "pe",   "lib",".a", "lib",".so",    "","",     "lib",".lib.a", "PATH");
-SLBT_FLAVOR_SETTINGS(host_flavor_mingw,   "pe",   "lib",".a", "lib",".dll",   "",".exe", "lib",".dll.a", "PATH");
-SLBT_FLAVOR_SETTINGS(host_flavor_cygwin,  "pe",   "lib",".a", "lib",".dll",   "",".exe", "lib",".dll.a", "PATH");
-SLBT_FLAVOR_SETTINGS(host_flavor_darwin,  "macho","lib",".a", "lib",".dylib", "","",     "",   "",       "DYLD_LIBRARY_PATH");
+SLBT_FLAVOR_SETTINGS(host_flavor_default, "elf",  "-fPIC","lib",".a", "lib",".so",    "","",     "",   "",       "LD_LIBRARY_PATH");
+SLBT_FLAVOR_SETTINGS(host_flavor_midipix, "pe",   "-fPIC","lib",".a", "lib",".so",    "","",     "lib",".lib.a", "PATH");
+SLBT_FLAVOR_SETTINGS(host_flavor_mingw,   "pe",   0,      "lib",".a", "lib",".dll",   "",".exe", "lib",".dll.a", "PATH");
+SLBT_FLAVOR_SETTINGS(host_flavor_cygwin,  "pe",   0,      "lib",".a", "lib",".dll",   "",".exe", "lib",".dll.a", "PATH");
+SLBT_FLAVOR_SETTINGS(host_flavor_darwin,  "macho","-fPIC","lib",".a", "lib",".dylib", "","",     "",   "",       "DYLD_LIBRARY_PATH");
 
 
 /* annotation strings */
@@ -1245,24 +1245,20 @@ int slbt_get_driver_ctx(
 	ctx->cctx.cargv		= sargv.cargv;
 
 	/* host params */
-	if (cctx.mode == SLBT_MODE_COMPILE) {
-		(void)0;
-
-	} else {
-		if (slbt_init_host_params(
-				&ctx->ctx,
-				&ctx->cctx,
-				&ctx->host,
-				&ctx->cctx.host,
-				&ctx->cctx.cfgmeta)) {
-			slbt_free_driver_ctx(&ctx->ctx);
-			return -1;
-		}
-
-		slbt_init_flavor_settings(
-			&ctx->cctx,0,
-			&ctx->cctx.settings);
+	if (slbt_init_host_params(
+			&ctx->ctx,
+			&ctx->cctx,
+			&ctx->host,
+			&ctx->cctx.host,
+			&ctx->cctx.cfgmeta)) {
+		slbt_free_driver_ctx(&ctx->ctx);
+		return -1;
 	}
+
+	/* flavor settings */
+	slbt_init_flavor_settings(
+		&ctx->cctx,0,
+		&ctx->cctx.settings);
 
 	/* ldpath */
 	if (slbt_init_ldrpath(&ctx->cctx,&ctx->cctx.host)) {
