@@ -334,6 +334,17 @@ static int slbt_split_argv(
 		} else if (argv[i][1] == 'R') {
 			*targv++ = argv[i];
 
+		} else if (!(strncmp("-target=",&argv[i][1],8))) {
+			*cargv++ = argv[i];
+			*targv++ = argv[i];
+
+		} else if (!(strcmp("-target",&argv[i][1]))) {
+			*cargv++ = argv[i];
+			*targv++ = argv[i++];
+
+			*cargv++ = argv[i];
+			*targv++ = argv[i];
+
 		} else if (!(strcmp("bindir",&argv[i][1]))) {
 			*targv++ = argv[i++];
 			*targv++ = argv[i];
