@@ -65,6 +65,9 @@ int slbt_output_config(const struct slbt_driver_ctx * dctx)
 	if ((len = strlen(cctx->host.ranlib)) > midwidth)
 		midwidth = len;
 
+	if ((len = strlen(cctx->host.windres)) > midwidth)
+		midwidth = len;
+
 	if ((len = strlen(cctx->host.dlltool)) > midwidth)
 		midwidth = len;
 
@@ -96,6 +99,9 @@ int slbt_output_config(const struct slbt_driver_ctx * dctx)
 		return SLBT_SYSTEM_ERROR(dctx);
 
 	if (slbt_output_config_line(fdout,"ranlib",cctx->host.ranlib,cctx->cfgmeta.ranlib,midwidth))
+		return SLBT_SYSTEM_ERROR(dctx);
+
+	if (slbt_output_config_line(fdout,"windres",cctx->host.windres,cctx->cfgmeta.windres,midwidth))
 		return SLBT_SYSTEM_ERROR(dctx);
 
 	if (slbt_output_config_line(fdout,"dlltool",cctx->host.dlltool,cctx->cfgmeta.dlltool,midwidth))

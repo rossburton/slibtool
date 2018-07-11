@@ -95,6 +95,10 @@ const struct argv_option slbt_default_options[] = {
 				"explicitly specify the PE custom import library "
 				"generator to be used"},
 
+	{"windres",		0,TAG_WINDRES,ARGV_OPTARG_REQUIRED,0,0,"<windres>",
+				"explicitly specify the PE resource compiler "
+				"to be used"},
+
 	{"implib",		0,TAG_IMPLIB,ARGV_OPTARG_REQUIRED,0,
 				"idata|dsometa",0,
 				"PE import libraries should either use the legacy "

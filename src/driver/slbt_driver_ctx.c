@@ -617,6 +617,31 @@ static int slbt_init_host_params(
 		host->ranlib = drvhost->ranlib;
 	}
 
+	/* windres */
+	if (host->windres)
+		cfgmeta->windres = cfgexplicit;
+
+	else if (strcmp(host->flavor,"cygwin")
+			&& strcmp(host->flavor,"midipix")
+			&& strcmp(host->flavor,"mingw")) {
+		host->windres    = "";
+		cfgmeta->windres = "not applicable";
+
+	} else {
+		if (!(drvhost->windres = calloc(1,toollen)))
+			return -1;
+
+		if (fnative) {
+			strcpy(drvhost->windres,"windres");
+			cfgmeta->windres = cfgnative;
+		} else {
+			sprintf(drvhost->windres,"%s-windres",host->host);
+			cfgmeta->windres = cfghost;
+		}
+
+		host->windres = drvhost->windres;
+	}
+
 	/* dlltool */
 	if (host->dlltool)
 		cfgmeta->dlltool = cfgexplicit;
@@ -686,6 +711,9 @@ static void slbt_free_host_params(struct slbt_host_strs * host)
 
 	if (host->ranlib)
 		free(host->ranlib);
+
+	if (host->windres)
+		free(host->windres);
 
 	if (host->dlltool)
 		free(host->dlltool);
@@ -1128,6 +1156,10 @@ int slbt_get_driver_ctx(
 
 				case TAG_RANLIB:
 					cctx.host.ranlib = entry->arg;
+					break;
+
+				case TAG_WINDRES:
+					cctx.host.windres = entry->arg;
 					break;
 
 				case TAG_DLLTOOL:
