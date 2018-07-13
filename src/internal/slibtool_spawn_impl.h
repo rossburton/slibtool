@@ -9,6 +9,7 @@
 
 #include <limits.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <stdbool.h>
 #include <errno.h>
 #include <sys/wait.h>
@@ -57,13 +58,18 @@ static inline int slbt_spawn(
 
 #endif
 
-	if (pid < 0)
+	if (pid < 0) {
+		ectx->pid      = pid;
+		ectx->exitcode = errno;
 		return -1;
+	}
 
-	if (pid == 0)
-		return execvp(
+	if (pid == 0) {
+		execvp(
 			ectx->program,
 			ectx->argv);
+		_exit(errno);
+	}
 
 	errno     = 0;
 	ectx->pid = pid;
