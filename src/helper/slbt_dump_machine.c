@@ -113,13 +113,13 @@ int slbt_dump_machine(
 		0);
 
 	if ((rpid != pid) || code) {
-		errno = EBADR;
+		errno = ESTALE;
 		return -1;
 	}
 
 	/* newline verification */
 	if ((mark == machine) || (*--mark != '\n')) {
-		errno = EBADR;
+		errno = ERANGE;
 		return -1;
 	}
 
