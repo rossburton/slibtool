@@ -1277,6 +1277,11 @@ int slbt_get_driver_ctx(
 	if (cctx.drvflags & (SLBT_DRIVER_CONFIG | SLBT_DRIVER_FEATURES))
 		cctx.mode = SLBT_MODE_INFO;
 
+	/* --tag */
+	if (cctx.mode == SLBT_MODE_COMPILE)
+		if (cctx.tag == SLBT_TAG_UNKNOWN)
+			cctx.tag = SLBT_TAG_CC;
+
 	/* driver context */
 	if (!(ctx = slbt_driver_ctx_alloc(meta,fdctx,&cctx)))
 		return slbt_get_driver_ctx_fail(meta);
