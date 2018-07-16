@@ -47,7 +47,7 @@ int slbt_dump_machine(
 	char *		machine,
 	size_t		buflen)
 {
-	int	ret;
+	ssize_t	ret;
 	pid_t	pid;
 	pid_t	rpid;
 	int	code;
@@ -102,7 +102,7 @@ int slbt_dump_machine(
 
 		} else {
 			close(fd[0]);
-			return ret;
+			return -1;
 		}
 	}
 
