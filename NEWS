@@ -1,3 +1,27 @@
+0.5.25:
+
+This patch release follows several important enhancements in slibtool's
+functionality, including proper support of explicit .a and .so input
+arguments in link mode, and use of validly alternate (non-)pic objects.
+With respect to compiler and target flavors, slibtool now accommodates
+clang's debated approach towards the -fPIC switch in always-pic targets.
+Last but not least, and following much discussion and consideration of
+the various trade-offs, this release redefines _XOPEN_SOURCE to 700. With
+that said, slibtool could still be easily built on older systems for as
+long as they provide openat, faccessat, and (the soon-to-be-used) fexecve.
+
+- driver: added --tag=RC support.
+- driver: added --windres support.
+- driver: use a compiler --target argument also as a tool argument.
+- driver: if no --tag had been defined in compile mode, set --tag to CC.
+- link mode: properly handle explicit archive input arguments.
+- link mode: properly handle external archives and libraries.
+- link mode: process dependencies also for non-pic .la args.
+- link mode: support validly alternate (non-)pic objects.
+- target flavors: accommodate conceptually challenged, PICky targets.
+- target flavors: flavor detection: associate -windows- with mingw.
+- target flavors: further eliminate compiler -dumpmachine invocations.
+
 0.5.24:
 
 This patch release explicitly requests definition of AT_FDCWD via definition
