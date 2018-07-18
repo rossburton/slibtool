@@ -149,10 +149,8 @@ static int slbt_get_deps_meta(
 	return 0;
 }
 
-static bool slbt_adjust_input_argument(
+static bool slbt_adjust_object_argument(
 	char *		arg,
-	const char *	osuffix,
-	const char *	asuffix,
 	bool		fpic)
 {
 	char *	slash;
@@ -165,7 +163,7 @@ static bool slbt_adjust_input_argument(
 	if (!(dot = strrchr(arg,'.')))
 		return false;
 
-	if (strcmp(dot,osuffix))
+	if (strcmp(dot,".lo"))
 		return false;
 
 	if (fpic) {
@@ -182,7 +180,42 @@ static bool slbt_adjust_input_argument(
 		dot = strrchr(arg,'.');
 	}
 
-	strcpy(dot,asuffix);
+	strcpy(dot,".o");
+	return true;
+}
+
+static bool slbt_adjust_wrapper_argument(
+	char *		arg,
+	bool		fpic)
+{
+	char *	slash;
+	char *	dot;
+	char	base[PATH_MAX];
+
+	if (*arg == '-')
+		return false;
+
+	if (!(dot = strrchr(arg,'.')))
+		return false;
+
+	if (strcmp(dot,".la"))
+		return false;
+
+	if (fpic) {
+		if ((slash = strrchr(arg,'/')))
+			slash++;
+		else
+			slash = arg;
+
+		if ((size_t)snprintf(base,sizeof(base),"%s",
+				slash) >= sizeof(base))
+			return false;
+
+		sprintf(slash,".libs/%s",base);
+		dot = strrchr(arg,'.');
+	}
+
+	strcpy(dot,".a");
 	return true;
 }
 
@@ -1058,7 +1091,7 @@ static int slbt_exec_link_create_archive(
 
 	/* input argument adjustment */
 	for (parg=ectx->cargv; *parg; parg++)
-		if (slbt_adjust_input_argument(*parg,".lo",".o",fpic))
+		if (slbt_adjust_object_argument(*parg,fpic))
 			*aarg++ = *parg;
 
 	*aarg = 0;
@@ -1085,7 +1118,7 @@ static int slbt_exec_link_create_archive(
 
 	/* input objects associated with .la archives */
 	for (parg=ectx->cargv; *parg; parg++)
-		if (slbt_adjust_input_argument(*parg,".la",".a",true))
+		if (slbt_adjust_wrapper_argument(*parg,true))
 			if (slbt_archive_import(dctx,ectx,output,*parg))
 				return SLBT_NESTED_ERROR(dctx);
 
@@ -1137,7 +1170,7 @@ static int slbt_exec_link_create_library(
 
 	/* input argument adjustment */
 	for (parg=ectx->cargv; *parg; parg++)
-		slbt_adjust_input_argument(*parg,".lo",".o",true);
+		slbt_adjust_object_argument(*parg,true);
 
 	/* .deps */
 	if (slbt_exec_link_create_dep_file(
@@ -1317,7 +1350,7 @@ static int slbt_exec_link_create_executable(
 
 	/* input argument adjustment */
 	for (parg=ectx->cargv; *parg; parg++)
-		slbt_adjust_input_argument(*parg,".lo",".o",fpic);
+		slbt_adjust_object_argument(*parg,fpic);
 
 	/* linker argument adjustment */
 	for (parg=ectx->cargv, xarg=ectx->xargv; *parg; parg++, xarg++)
