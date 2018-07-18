@@ -151,7 +151,9 @@ static int slbt_get_deps_meta(
 
 static bool slbt_adjust_object_argument(
 	char *		arg,
-	bool		fpic)
+	bool		fpic,
+	bool		fany,
+	int		fdcwd)
 {
 	char *	slash;
 	char *	dot;
@@ -160,27 +162,56 @@ static bool slbt_adjust_object_argument(
 	if (*arg == '-')
 		return false;
 
+	/* object argument: foo.lo or foo.o */
 	if (!(dot = strrchr(arg,'.')))
 		return false;
 
-	if (strcmp(dot,".lo"))
+	if ((dot[1]=='l') && (dot[2]=='o') && !dot[3]) {
+		dot[1] = 'o';
+		dot[2] = 0;
+
+	} else if ((dot[1]=='o') && !dot[2]) {
+		(void)0;
+
+	} else {
 		return false;
-
-	if (fpic) {
-		if ((slash = strrchr(arg,'/')))
-			slash++;
-		else
-			slash = arg;
-
-		if ((size_t)snprintf(base,sizeof(base),"%s",
-				slash) >= sizeof(base))
-			return false;
-
-		sprintf(slash,".libs/%s",base);
-		dot = strrchr(arg,'.');
 	}
 
-	strcpy(dot,".o");
+	/* foo.o requested and is present? */
+	if (!fpic && !faccessat(fdcwd,arg,0,0))
+		return true;
+
+	/* .libs/foo.o */
+	if ((slash = strrchr(arg,'/')))
+		slash++;
+	else
+		slash = arg;
+
+	if ((size_t)snprintf(base,sizeof(base),"%s",
+			slash) >= sizeof(base))
+		return false;
+
+	sprintf(slash,".libs/%s",base);
+
+	if (!faccessat(fdcwd,arg,0,0))
+		return true;
+
+	/* foo.o requested and neither is present? */
+	if (!fpic) {
+		strcpy(slash,base);
+		return true;
+	}
+
+	/* .libs/foo.o explicitly requested and is not present? */
+	if (!fany)
+		return true;
+
+	/* use foo.o in place of .libs/foo.o */
+	strcpy(slash,base);
+
+	if (faccessat(fdcwd,arg,0,0))
+		sprintf(slash,".libs/%s",base);
+
 	return true;
 }
 
@@ -1049,6 +1080,7 @@ static int slbt_exec_link_create_archive(
 	bool				fpic,
 	bool				fprimary)
 {
+	int		fdcwd;
 	char ** 	aarg;
 	char ** 	parg;
 	char *		base;
@@ -1084,14 +1116,18 @@ static int slbt_exec_link_create_archive(
 			dctx->cctx->host.ar) >= sizeof(program))
 		return SLBT_BUFFER_ERROR(dctx);
 
+
+	/* fdcwd */
+	fdcwd   = slbt_driver_fdcwd(dctx);
+
+	/* input argument adjustment */
 	aarg    = ectx->altv;
 	*aarg++ = program;
 	*aarg++ = "crs";
 	*aarg++ = output;
 
-	/* input argument adjustment */
 	for (parg=ectx->cargv; *parg; parg++)
-		if (slbt_adjust_object_argument(*parg,fpic))
+		if (slbt_adjust_object_argument(*parg,fpic,!fpic,fdcwd))
 			*aarg++ = *parg;
 
 	*aarg = 0;
@@ -1154,6 +1190,7 @@ static int slbt_exec_link_create_library(
 	const char *			dsofilename,
 	const char *			relfilename)
 {
+	int	fdcwd;
 	char ** parg;
 	char ** xarg;
 	char	cwd    [PATH_MAX];
@@ -1168,9 +1205,12 @@ static int slbt_exec_link_create_library(
 	/* placeholders */
 	slbt_reset_placeholders(ectx);
 
+	/* fdcwd */
+	fdcwd = slbt_driver_fdcwd(dctx);
+
 	/* input argument adjustment */
 	for (parg=ectx->cargv; *parg; parg++)
-		slbt_adjust_object_argument(*parg,true);
+		slbt_adjust_object_argument(*parg,true,false,fdcwd);
 
 	/* .deps */
 	if (slbt_exec_link_create_dep_file(
@@ -1350,7 +1390,7 @@ static int slbt_exec_link_create_executable(
 
 	/* input argument adjustment */
 	for (parg=ectx->cargv; *parg; parg++)
-		slbt_adjust_object_argument(*parg,fpic);
+		slbt_adjust_object_argument(*parg,fpic,true,fdcwd);
 
 	/* linker argument adjustment */
 	for (parg=ectx->cargv, xarg=ectx->xargv; *parg; parg++, xarg++)
