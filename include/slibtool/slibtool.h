@@ -260,9 +260,13 @@ slbt_api				const struct slbt_source_version * slbt_source_version(void);
 
 /* driver api */
 slbt_api int  slbt_get_driver_ctx	(char ** argv, char ** envp, uint32_t flags,
-                                         const struct slbt_fd_ctx *, struct slbt_driver_ctx **);
+                                         const struct slbt_fd_ctx *,
+                                         struct slbt_driver_ctx **);
+
 slbt_api int  slbt_create_driver_ctx	(const struct slbt_common_ctx *,
-                                         const struct slbt_fd_ctx *, struct slbt_driver_ctx **);
+                                         const struct slbt_fd_ctx *,
+                                         struct slbt_driver_ctx **);
+
 slbt_api void slbt_free_driver_ctx	(struct slbt_driver_ctx *);
 
 slbt_api int  slbt_get_driver_fdctx	(const struct slbt_driver_ctx *, struct slbt_fd_ctx *);
@@ -295,6 +299,7 @@ slbt_api int  slbt_dump_machine		(const char * compiler, char * machine, size_t 
 /* utility api */
 slbt_api int  slbt_main			(int, char **, char **,
                                          const struct slbt_fd_ctx *);
+
 slbt_api int  slbt_output_config	(const struct slbt_driver_ctx *);
 slbt_api int  slbt_output_features	(const struct slbt_driver_ctx *);
 slbt_api int  slbt_output_exec		(const struct slbt_driver_ctx *, const struct slbt_exec_ctx *, const char *);
