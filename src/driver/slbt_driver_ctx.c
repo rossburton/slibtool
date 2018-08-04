@@ -1333,41 +1333,6 @@ int slbt_get_driver_ctx(
 	return SLBT_OK;
 }
 
-int slbt_create_driver_ctx(
-	const struct slbt_common_ctx *	cctx,
-	const struct slbt_fd_ctx *	fdctx,
-	struct slbt_driver_ctx **	pctx)
-{
-	const struct argv_option *	optv[SLBT_OPTV_ELEMENTS];
-	struct argv_meta *		meta;
-	struct slbt_driver_ctx_impl *	ctx;
-	char *				argv[] = {"slibtool_driver",0};
-
-	argv_optv_init(slbt_default_options,optv);
-
-	if (!fdctx) {
-		fdctx = &(const struct slbt_fd_ctx) {
-			.fdin  = STDIN_FILENO,
-			.fdout = STDOUT_FILENO,
-			.fderr = STDERR_FILENO,
-			.fdlog = (-1),
-			.fdcwd = AT_FDCWD,
-			.fddst = AT_FDCWD,
-		};
-	}
-
-	if (!(meta = argv_get(argv,optv,0,fdctx->fderr)))
-		return -1;
-
-	if (!(ctx = slbt_driver_ctx_alloc(meta,fdctx,cctx)))
-		return slbt_get_driver_ctx_fail(0);
-
-	ctx->ctx.cctx = &ctx->cctx;
-	memcpy(&ctx->cctx,cctx,sizeof(*cctx));
-	*pctx = &ctx->ctx;
-	return SLBT_OK;
-}
-
 static void slbt_free_driver_ctx_impl(struct slbt_driver_ctx_alloc * ictx)
 {
 	if (ictx->ctx.targv)

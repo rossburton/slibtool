@@ -260,10 +260,6 @@ slbt_api int  slbt_get_driver_ctx       (char ** argv, char ** envp, uint32_t fl
                                          const struct slbt_fd_ctx *,
                                          struct slbt_driver_ctx **);
 
-slbt_api int  slbt_create_driver_ctx    (const struct slbt_common_ctx *,
-                                         const struct slbt_fd_ctx *,
-                                         struct slbt_driver_ctx **);
-
 slbt_api void slbt_free_driver_ctx      (struct slbt_driver_ctx *);
 
 slbt_api int  slbt_get_driver_fdctx     (const struct slbt_driver_ctx *, struct slbt_fd_ctx *);
