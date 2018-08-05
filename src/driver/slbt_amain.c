@@ -33,7 +33,7 @@ static const char * const slbt_ver_plain[6] = {
 		"",""
 };
 
-static ssize_t slbt_version(int fdout, struct slbt_driver_ctx * dctx)
+static ssize_t slbt_version(struct slbt_driver_ctx * dctx, int fdout)
 {
 	const struct slbt_source_version * verinfo;
 	const char * const * verclr;
@@ -109,7 +109,7 @@ int slbt_main(int argc, char ** argv, char ** envp,
 		sargv[4] = 0;
 
 		return (slbt_get_driver_ctx(sargv,envp,flags,fdctx,&dctx))
-			? SLBT_ERROR : (slbt_version(fdout,dctx) < 0)
+			? SLBT_ERROR : (slbt_version(dctx,fdout) < 0)
 				? slbt_exit(dctx,SLBT_ERROR)
 				: slbt_exit(dctx,SLBT_OK);
 	}
@@ -157,7 +157,7 @@ int slbt_main(int argc, char ** argv, char ** envp,
 			: SLBT_ERROR;
 
 	if (dctx->cctx->drvflags & SLBT_DRIVER_VERSION)
-		if ((slbt_version(fdout,dctx)) < 0)
+		if ((slbt_version(dctx,fdout)) < 0)
 			return slbt_exit(dctx,SLBT_ERROR);
 
 	slbt_perform_driver_actions(dctx);
