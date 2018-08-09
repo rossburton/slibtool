@@ -8,5 +8,5 @@
 
 int main(int argc, char ** argv, char ** envp)
 {
-	return slbt_main(argc,argv,envp,0);
+	return slbt_main(argv,envp,0);
 }

@@ -290,7 +290,7 @@ slbt_api int  slbt_copy_file            (const struct slbt_driver_ctx *, struct 
 slbt_api int  slbt_dump_machine         (const char * compiler, char * machine, size_t bufsize);
 
 /* utility api */
-slbt_api int  slbt_main                 (int, char **, char **,
+slbt_api int  slbt_main                 (char **, char **,
                                          const struct slbt_fd_ctx *);
 
 slbt_api int  slbt_output_config        (const struct slbt_driver_ctx *);

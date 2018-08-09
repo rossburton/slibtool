@@ -83,10 +83,10 @@ static int slbt_exit(struct slbt_driver_ctx * dctx, int ret)
 	return ret;
 }
 
-int slbt_main(int argc, char ** argv, char ** envp,
-              const struct slbt_fd_ctx * fdctx)
+int slbt_main(char ** argv, char ** envp, const struct slbt_fd_ctx * fdctx)
 {
 	int				ret;
+	const char *			harg;
 	int				fdout;
 	uint64_t			flags;
 	struct slbt_driver_ctx *	dctx;
@@ -97,11 +97,15 @@ int slbt_main(int argc, char ** argv, char ** envp,
 	flags = SLBT_DRIVER_FLAGS;
 	fdout = fdctx ? fdctx->fdout : STDOUT_FILENO;
 
+	/* harg */
+	harg = (!argv || !argv[0] || !argv[1] || argv[2])
+		? 0 : argv[1];
+
 	/* --version only? */
-	if ((argc == 2) && (!strcmp(argv[1],"--version")
-				|| !strcmp(argv[1],"--help-all")
-				|| !strcmp(argv[1],"--help")
-				|| !strcmp(argv[1],"-h"))) {
+	if (harg && (!strcmp(harg,"--version")
+				|| !strcmp(harg,"--help-all")
+				|| !strcmp(harg,"--help")
+				|| !strcmp(harg,"-h"))) {
 		sargv[0] = argv[0];
 		sargv[1] = argv[1];
 		sargv[2] = "--mode=compile";
@@ -153,7 +157,7 @@ int slbt_main(int argc, char ** argv, char ** envp,
 	/* driver context */
 	if ((ret = slbt_get_driver_ctx(argv,envp,flags,fdctx,&dctx)))
 		return (ret == SLBT_USAGE)
-			? !--argc
+			? !argv || !argv[0] || !argv[1]
 			: SLBT_ERROR;
 
 	if (dctx->cctx->drvflags & SLBT_DRIVER_VERSION)
