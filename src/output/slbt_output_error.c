@@ -35,7 +35,9 @@ static const char * slbt_output_error_header(const struct slbt_error_info * erri
 		return "distorted state";
 }
 
-static const char * slbt_output_strerror(const struct slbt_error_info * erri)
+static const char * slbt_output_strerror(
+	const struct slbt_error_info * erri,
+	char (*errbuf)[256])
 {
 	if (erri->eflags & SLBT_ERROR_CUSTOM)
 		return "flow error: unexpected condition or other";
@@ -50,14 +52,17 @@ static const char * slbt_output_strerror(const struct slbt_error_info * erri)
 		return "input error: string length exceeds buffer size.";
 
 	else
-		return strerror(erri->esyscode);
+		return strerror_r(erri->esyscode,*errbuf,sizeof(*errbuf))
+			? "internal error: strerror_r(3) call failed"
+			: *errbuf;
 }
 
 static int slbt_output_error_record_plain(
 	const struct slbt_driver_ctx *	dctx,
 	const struct slbt_error_info *	erri)
 {
-	const char * errdesc = slbt_output_strerror(erri);
+	char         errbuf[256];
+	const char * errdesc = slbt_output_strerror(erri,&errbuf);
 
 	if (slbt_dprintf(slbt_driver_fderr(dctx),
 			"%s: %s %s(), line %d%s%s.\n",
@@ -76,7 +81,8 @@ static int slbt_output_error_record_annotated(
 	const struct slbt_driver_ctx *	dctx,
 	const struct slbt_error_info *	erri)
 {
-	const char * errdesc = slbt_output_strerror(erri);
+	char         errbuf[256];
+	const char * errdesc = slbt_output_strerror(erri,&errbuf);
 
 	if (slbt_dprintf(
 			slbt_driver_fderr(dctx),
@@ -100,7 +106,7 @@ static int slbt_output_error_record_annotated(
 			strlen(errdesc) ? ": " : "",
 
 			aclr_bold,
-			slbt_output_strerror(erri),
+			errdesc,
 			aclr_reset) < 0)
 		return -1;
 
