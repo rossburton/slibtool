@@ -62,9 +62,12 @@ static int slbt_output_error_record_plain(
 	const struct slbt_error_info *	erri)
 {
 	char         errbuf[256];
+
+	int          fderr   = slbt_driver_fderr(dctx);
 	const char * errdesc = slbt_output_strerror(erri,&errbuf);
 
-	if (slbt_dprintf(slbt_driver_fderr(dctx),
+	if (slbt_dprintf(
+			fderr,
 			"%s: %s %s(), line %d%s%s.\n",
 			dctx->program,
 			slbt_output_error_header(erri),
@@ -82,10 +85,12 @@ static int slbt_output_error_record_annotated(
 	const struct slbt_error_info *	erri)
 {
 	char         errbuf[256];
+
+	int          fderr   = slbt_driver_fderr(dctx);
 	const char * errdesc = slbt_output_strerror(erri,&errbuf);
 
 	if (slbt_dprintf(
-			slbt_driver_fderr(dctx),
+			fderr,
 			"%s%s%s:%s %s%s%s %s%s%s()%s, %s%sline %d%s%s%s%s%s.\n",
 
 			aclr_bold,aclr_magenta,
