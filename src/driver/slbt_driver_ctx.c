@@ -14,6 +14,7 @@
 #include "slibtool_version.h"
 #include "slibtool_driver_impl.h"
 #include "slibtool_errinfo_impl.h"
+#include "slibtool_lconf_impl.h"
 #include "argv/argv.h"
 
 /* package info */
@@ -966,6 +967,8 @@ int slbt_get_driver_ctx(
 	struct argv_meta *		meta;
 	struct argv_entry *		entry;
 	const char *			program;
+	const char *			lconf;
+	uint64_t			lflags;
 
 	argv_optv_init(slbt_default_options,optv);
 
@@ -989,7 +992,9 @@ int slbt_get_driver_ctx(
 			fdctx->fderr)))
 		return -1;
 
+	lconf   = 0;
 	program = argv_program_name(argv[0]);
+
 	memset(&cctx,0,sizeof(cctx));
 
 	/* shared and static objects: enable by default, disable by ~switch */
@@ -1011,6 +1016,11 @@ int slbt_get_driver_ctx(
 
 				case TAG_VERSION:
 					cctx.drvflags |= SLBT_DRIVER_VERSION;
+					break;
+
+				case TAG_HEURISTICS:
+					cctx.drvflags |= SLBT_DRIVER_HEURISTICS;
+					lconf = entry->arg;
 					break;
 
 				case TAG_MODE:
@@ -1286,6 +1296,32 @@ int slbt_get_driver_ctx(
 	if (!(ctx = slbt_driver_ctx_alloc(meta,fdctx,&cctx)))
 		return slbt_get_driver_ctx_fail(meta);
 
+	/* heuristics */
+	if (cctx.drvflags & SLBT_DRIVER_HEURISTICS) {
+		if (slbt_get_lconf_flags(&ctx->ctx,lconf,&lflags) < 0) {
+			slbt_free_driver_ctx(&ctx->ctx);
+			return -1;
+		}
+
+		cctx.drvflags &= ~(uint64_t)SLBT_DRIVER_DISABLE_STATIC;
+		cctx.drvflags &= ~(uint64_t)SLBT_DRIVER_DISABLE_SHARED;
+
+		cctx.drvflags |= lflags;
+		cctx.drvflags |= SLBT_DRIVER_SHARED;
+		cctx.drvflags |= SLBT_DRIVER_STATIC;
+
+		/* -disable-static? */
+		if (cctx.drvflags & SLBT_DRIVER_DISABLE_STATIC)
+			cctx.drvflags &= ~(uint64_t)SLBT_DRIVER_STATIC;
+
+		/* -disable-shared? */
+		if (cctx.drvflags & SLBT_DRIVER_DISABLE_SHARED)
+			cctx.drvflags &= ~(uint64_t)SLBT_DRIVER_SHARED;
+
+		ctx->cctx.drvflags = cctx.drvflags;
+	}
+
+	/* ctx */
 	ctx->ctx.program	= program;
 	ctx->ctx.cctx		= &ctx->cctx;
 	ctx->targv		= sargv.targv;

@@ -11,6 +11,12 @@ const struct argv_option slbt_default_options[] = {
 	{"help-all",		'h',TAG_HELP_ALL,ARGV_OPTARG_NONE,0,0,0,
 				"show comprehensive help information"},
 
+	{"heuristics",		0,TAG_HEURISTICS,ARGV_OPTARG_OPTIONAL,0,0,"<path>",
+				"enable/disable creation of shared/static libraries "
+				"by parsing a project-specific shell script, "
+				"the %s of which is either provided via this "
+				"command-line argument, or detected by the program."},
+
 	{"mode",		0,TAG_MODE,ARGV_OPTARG_REQUIRED,0,
 				"clean|compile|execute|finish"
 				"|install|link|uninstall",0,
