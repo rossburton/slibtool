@@ -87,6 +87,9 @@ enum slbt_custom_error {
 	SLBT_ERR_LINK_FREQ,
 	SLBT_ERR_BAD_DATA,
 	SLBT_ERR_UNINSTALL_FAIL,
+	SLBT_ERR_LCONF_OPEN,
+	SLBT_ERR_LCONF_MAP,
+	SLBT_ERR_LCONF_PARSE,
 };
 
 /* execution modes */

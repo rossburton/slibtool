@@ -21,6 +21,7 @@ API_SRCS = \
 INTERNAL_SRCS = \
 	src/internal/$(PACKAGE)_dprintf_impl.c \
 	src/internal/$(PACKAGE)_errinfo_impl.c \
+	src/internal/$(PACKAGE)_lconf_impl.c \
 	src/internal/$(PACKAGE)_libmeta_impl.c \
 	src/internal/$(PACKAGE)_mapfile_impl.c \
 	src/internal/$(PACKAGE)_objmeta_impl.c \
