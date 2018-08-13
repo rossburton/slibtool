@@ -154,6 +154,10 @@ int slbt_main(char ** argv, char ** envp, const struct slbt_fd_ctx * fdctx)
 		if ((program[8] == '-') || (program[8] == '.'))
 			flags |= SLBT_DRIVER_LEGABITS;
 
+	/* heuristics */
+	if (!(strcmp(program,"rlibtool")))
+		flags |= SLBT_DRIVER_HEURISTICS;
+
 	/* driver context */
 	if ((ret = slbt_get_driver_ctx(argv,envp,flags,fdctx,&dctx)))
 		return (ret == SLBT_USAGE)
