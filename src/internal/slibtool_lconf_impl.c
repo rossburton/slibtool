@@ -97,10 +97,6 @@ int slbt_get_lconf_flags(
 	if ((fdlconf = slbt_lconf_open(dctx,lconf)) < 0)
 		return SLBT_NESTED_ERROR(dctx);
 
-	if (fdlconf < 0)
-		return SLBT_CUSTOM_ERROR(
-			dctx,SLBT_ERR_LCONF_OPEN);
-
 	/* map relative libtool script */
 	if (fstat(fdlconf,&st) < 0)
 		return SLBT_SYSTEM_ERROR(dctx);
