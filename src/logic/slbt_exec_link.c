@@ -259,6 +259,7 @@ static int slbt_adjust_linker_argument(
 	const char *			arsuffix,
 	struct slbt_deps_meta * 	depsmeta)
 {
+	int	fdcwd;
 	int	fdlib;
 	char *	slash;
 	char *	dot;
@@ -295,13 +296,16 @@ static int slbt_adjust_linker_argument(
 		dot = strrchr(arg,'.');
 	}
 
+	/* fdcwd */
+	fdcwd = slbt_driver_fdcwd(dctx);
+
 	/* shared library dependency? */
 	if (fpic) {
 		sprintf(dot,"%s",dsosuffix);
 
 		if (slbt_symlink_is_a_placeholder(arg))
 			sprintf(dot,"%s",arsuffix);
-		else if ((fdlib = open(arg,O_RDONLY)) >= 0)
+		else if ((fdlib = openat(fdcwd,arg,O_RDONLY)) >= 0)
 			close(fdlib);
 		else
 			sprintf(dot,"%s",arsuffix);
@@ -400,7 +404,7 @@ static int slbt_exec_link_adjust_argument_vector(
 			else
 				strcpy(mark,"/.libs");
 
-			if ((fd = open(ldir,O_DIRECTORY,0)) < 0)
+			if ((fd = openat(fdcwd,ldir,O_DIRECTORY,0)) < 0)
 				*mark = 0;
 			else
 				close(fd);
