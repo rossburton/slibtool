@@ -158,6 +158,22 @@ int slbt_main(char ** argv, char ** envp, const struct slbt_fd_ctx * fdctx)
 	if (!(strcmp(program,"rlibtool")))
 		flags |= SLBT_DRIVER_HEURISTICS;
 
+	/* heuristics + legabits */
+	if (!(strcmp(program,"rclibtool")))
+		flags |= (SLBT_DRIVER_HEURISTICS
+                          | SLBT_DRIVER_LEGABITS);
+
+	/* heuristics + debug */
+	if (!(strcmp(program,"rdlibtool")))
+		flags |= (SLBT_DRIVER_HEURISTICS
+                          | SLBT_DRIVER_DEBUG);
+
+	/* heuristics + debug + legabits */
+	if (!(strcmp(program,"rdclibtool")))
+		flags |= (SLBT_DRIVER_HEURISTICS
+                          | SLBT_DRIVER_DEBUG
+                          | SLBT_DRIVER_LEGABITS);
+
 	/* driver context */
 	if ((ret = slbt_get_driver_ctx(argv,envp,flags,fdctx,&dctx)))
 		return (ret == SLBT_USAGE)
