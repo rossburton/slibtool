@@ -1659,7 +1659,7 @@ int slbt_exec_link(
 	dot    = strrchr(output,'.');
 
 	/* .libs directory */
-	if (slbt_mkdir(ectx->ldirname)) {
+	if (slbt_mkdir(dctx,ectx->ldirname)) {
 		slbt_free_exec_ctx(actx);
 		return SLBT_SYSTEM_ERROR(dctx);
 	}

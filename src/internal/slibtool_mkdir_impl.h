@@ -10,17 +10,24 @@
 #include <errno.h>
 #include <unistd.h>
 
+#include "slibtool_driver_impl.h"
+
 #ifndef O_DIRECTORY
 #define O_DIRECTORY 0
 #endif
 
-static inline int slbt_mkdir(const char * path)
+static inline int slbt_mkdir(
+	const struct slbt_driver_ctx *	dctx,
+	const char *			path)
 {
+	int fdcwd;
 	int fdlibs;
 
-	if ((fdlibs = open(path,O_DIRECTORY)) >= 0)
+	fdcwd = slbt_driver_fdcwd(dctx);
+
+	if ((fdlibs = openat(fdcwd,path,O_DIRECTORY,0)) >= 0)
 		close(fdlibs);
-	else if ((errno != ENOENT) || mkdir(path,0777))
+	else if ((errno != ENOENT) || mkdirat(fdcwd,path,0777))
 		if (errno != EEXIST)
 			return -1;
 
