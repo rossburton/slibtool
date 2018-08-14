@@ -176,9 +176,17 @@ static struct slbt_driver_ctx_impl * slbt_driver_ctx_alloc(
 	return &ictx->ctx;
 }
 
-static int slbt_get_driver_ctx_fail(struct argv_meta * meta)
+static int slbt_get_driver_ctx_fail(
+	struct slbt_driver_ctx * dctx,
+	struct argv_meta *       meta)
 {
-	argv_free(meta);
+	if (dctx) {
+		slbt_output_error_vector(dctx);
+		slbt_free_driver_ctx(dctx);
+	} else {
+		argv_free(meta);
+	}
+
 	return -1;
 }
 
@@ -1294,14 +1302,21 @@ int slbt_get_driver_ctx(
 
 	/* driver context */
 	if (!(ctx = slbt_driver_ctx_alloc(meta,fdctx,&cctx)))
-		return slbt_get_driver_ctx_fail(meta);
+		return slbt_get_driver_ctx_fail(0,meta);
+
+	/* ctx */
+	ctx->ctx.program	= program;
+	ctx->ctx.cctx		= &ctx->cctx;
+	ctx->targv		= sargv.targv;
+	ctx->cargv		= sargv.cargv;
+
+	ctx->cctx.targv		= sargv.targv;
+	ctx->cctx.cargv		= sargv.cargv;
 
 	/* heuristics */
 	if (cctx.drvflags & SLBT_DRIVER_HEURISTICS) {
-		if (slbt_get_lconf_flags(&ctx->ctx,lconf,&lflags) < 0) {
-			slbt_free_driver_ctx(&ctx->ctx);
-			return -1;
-		}
+		if (slbt_get_lconf_flags(&ctx->ctx,lconf,&lflags) < 0)
+			return slbt_get_driver_ctx_fail(&ctx->ctx,0);
 
 		cctx.drvflags &= ~(uint64_t)SLBT_DRIVER_DISABLE_STATIC;
 		cctx.drvflags &= ~(uint64_t)SLBT_DRIVER_DISABLE_SHARED;
@@ -1321,25 +1336,14 @@ int slbt_get_driver_ctx(
 		ctx->cctx.drvflags = cctx.drvflags;
 	}
 
-	/* ctx */
-	ctx->ctx.program	= program;
-	ctx->ctx.cctx		= &ctx->cctx;
-	ctx->targv		= sargv.targv;
-	ctx->cargv		= sargv.cargv;
-
-	ctx->cctx.targv		= sargv.targv;
-	ctx->cctx.cargv		= sargv.cargv;
-
 	/* host params */
 	if (slbt_init_host_params(
 			&ctx->ctx,
 			&ctx->cctx,
 			&ctx->host,
 			&ctx->cctx.host,
-			&ctx->cctx.cfgmeta)) {
-		slbt_free_driver_ctx(&ctx->ctx);
-		return -1;
-	}
+			&ctx->cctx.cfgmeta))
+		return slbt_get_driver_ctx_fail(&ctx->ctx,0);
 
 	/* flavor settings */
 	slbt_init_flavor_settings(
@@ -1347,26 +1351,21 @@ int slbt_get_driver_ctx(
 		&ctx->cctx.settings);
 
 	/* ldpath */
-	if (slbt_init_ldrpath(&ctx->cctx,&ctx->cctx.host)) {
-		slbt_free_driver_ctx(&ctx->ctx);
-		return -1;
-	}
+	if (slbt_init_ldrpath(&ctx->cctx,&ctx->cctx.host))
+		return slbt_get_driver_ctx_fail(&ctx->ctx,0);
 
 	/* version info */
-	if (slbt_init_version_info(ctx,&ctx->cctx.verinfo)) {
-		slbt_free_driver_ctx(&ctx->ctx);
-		return -1;
-	}
+	if (slbt_init_version_info(ctx,&ctx->cctx.verinfo))
+		return slbt_get_driver_ctx_fail(&ctx->ctx,0);
 
 	/* link params */
 	if (cctx.mode == SLBT_MODE_LINK)
-		if (slbt_init_link_params(ctx)) {
-			slbt_free_driver_ctx(&ctx->ctx);
-			return -1;
-		}
+		if (slbt_init_link_params(ctx))
+			return slbt_get_driver_ctx_fail(&ctx->ctx,0);
 
 	*pctx = &ctx->ctx;
-	return SLBT_OK;
+
+	return 0;
 }
 
 static void slbt_free_driver_ctx_impl(struct slbt_driver_ctx_alloc * ictx)
