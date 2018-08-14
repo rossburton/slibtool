@@ -61,16 +61,22 @@ static int slbt_lconf_open(
 		if (fdparent < 0)
 			return SLBT_SYSTEM_ERROR(dctx);
 
-		if (fstat(fdparent,&stparent) < 0)
+		if (fstat(fdparent,&stparent) < 0) {
+			close(fdparent);
 			return SLBT_SYSTEM_ERROR(dctx);
+		}
 
-		if (stparent.st_dev != stcwd.st_dev)
+		if (stparent.st_dev != stcwd.st_dev) {
+			close(fdparent);
 			return SLBT_CUSTOM_ERROR(
 				dctx,SLBT_ERR_LCONF_OPEN);
+		}
 
 		fdlconfdir = fdparent;
 		fdlconf    = openat(fdlconfdir,"libtool",O_RDONLY,0);
 	}
+
+	slbt_lconf_close(fdcwd,fdlconfdir);
 
 	return fdlconf;
 }
