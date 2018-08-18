@@ -996,7 +996,7 @@ int slbt_get_driver_ctx(
 
 	if (!(meta = argv_get(
 			sargv.targv,optv,
-			slbt_argv_flags(flags),
+			slbt_argv_flags(flags) | ARGV_CLONE_VECTOR,
 			fdctx->fderr)))
 		return -1;
 
