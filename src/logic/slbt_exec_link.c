@@ -622,8 +622,8 @@ static int slbt_exec_link_finalize_argument_vector(
 		}
 
 		if (ectx->mout[0] == parg) {
-			ectx->lout[0] = &aarg[0];
-			ectx->lout[1] = &aarg[1];
+			ectx->mout[0] = &aarg[0];
+			ectx->mout[1] = &aarg[1];
 		}
 
 		arg = *parg;
