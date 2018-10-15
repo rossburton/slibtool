@@ -5,6 +5,7 @@
 /*******************************************************************/
 
 #include <stdint.h>
+#include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
 
@@ -69,11 +70,6 @@ static const char aclr_blue  [] = "\x1b[34m";
 static const char aclr_cyan  [] = "\x1b[36m";
 static const char aclr_white [] = "\x1b[37m";
 
-struct slbt_split_vector {
-	char **		targv;
-	char **		cargv;
-};
-
 struct slbt_driver_ctx_alloc {
 	struct argv_meta *		meta;
 	struct slbt_driver_ctx_impl	ctx;
@@ -130,12 +126,27 @@ static uint32_t slbt_argv_flags(uint32_t flags)
 	return ret;
 }
 
+static int slbt_free_argv_buffer(struct slbt_split_vector * sargv)
+{
+	if (sargv->dargs)
+		free(sargv->dargs);
+
+	if (sargv->dargv)
+		free(sargv->dargv);
+
+	if (sargv->targv)
+		free(sargv->targv);
+
+	return -1;
+}
+
 static int slbt_driver_usage(
 	int				fdout,
 	const char *			program,
 	const char *			arg,
 	const struct argv_option **	optv,
-	struct argv_meta *		meta)
+	struct argv_meta *		meta,
+	struct slbt_split_vector *	sargv)
 {
 	char header[512];
 
@@ -145,6 +156,7 @@ static int slbt_driver_usage(
 
 	argv_usage(fdout,header,optv,arg);
 	argv_free(meta);
+	slbt_free_argv_buffer(sargv);
 
 	return SLBT_USAGE;
 }
@@ -152,7 +164,8 @@ static int slbt_driver_usage(
 static struct slbt_driver_ctx_impl * slbt_driver_ctx_alloc(
 	struct argv_meta *		meta,
 	const struct slbt_fd_ctx *	fdctx,
-	const struct slbt_common_ctx *	cctx)
+	const struct slbt_common_ctx *	cctx,
+	struct slbt_split_vector *	sargv)
 {
 	struct slbt_driver_ctx_alloc *	ictx;
 	size_t				size;
@@ -160,8 +173,15 @@ static struct slbt_driver_ctx_impl * slbt_driver_ctx_alloc(
 
 	size =  sizeof(struct slbt_driver_ctx_alloc);
 
-	if (!(ictx = calloc(1,size)))
+	if (!(ictx = calloc(1,size))) {
+		slbt_free_argv_buffer(sargv);
 		return 0;
+	}
+
+	ictx->ctx.dargs = sargv->dargs;
+	ictx->ctx.dargv = sargv->dargv;
+	ictx->ctx.targv = sargv->targv;
+	ictx->ctx.cargv = sargv->cargv;
 
 	memcpy(&ictx->ctx.fdctx,fdctx,sizeof(*fdctx));
 	memcpy(&ictx->ctx.cctx,cctx,sizeof(*cctx));
@@ -200,8 +220,13 @@ static int slbt_split_argv(
 	int				argc;
 	const char *			program;
 	char *				compiler;
+	char **				dargv;
 	char **				targv;
 	char **				cargv;
+	char *				dst;
+	bool				flast;
+	bool				fcopy;
+	size_t				size;
 	struct argv_meta *		meta;
 	struct argv_entry *		entry;
 	struct argv_entry *		mode;
@@ -223,7 +248,7 @@ static int slbt_split_argv(
 	if (!argv[1] && (flags & SLBT_DRIVER_VERBOSITY_USAGE))
 		return slbt_driver_usage(
 			fderr,program,
-			0,optv,0);
+			0,optv,0,sargv);
 
 	/* initial argv scan: ... --mode=xxx ... <compiler> ... */
 	argv_scan(argv,optv,&ctx,0);
@@ -280,10 +305,87 @@ static int slbt_split_argv(
 		return -1;
 	}
 
-	/* allocate split vectors */
-	for (argc=0, targv=argv; *targv; targv++)
-		argc++;
+	/* clone and normalize the argv vector (-l, --library) */
+	for (argc=0,size=0,dargv=argv; *dargv; argc++,dargv++)
+		size += strlen(*dargv) + 1;
 
+	if (!(sargv->dargv = calloc(argc+1,sizeof(char *))))
+		return -1;
+
+	else if (!(sargv->dargs = calloc(1,size+1)))
+		return -1;
+
+	for (i=0,flast=false,dargv=sargv->dargv,dst=sargv->dargs; i<argc; i++) {
+		if ((fcopy = flast)) {
+			(void)0;
+
+		} else if (!strcmp(argv[i],"--")) {
+			flast = true;
+			fcopy = true;
+
+		} else if (!strcmp(argv[i],"-l")) {
+			*dargv++ = dst;
+			*dst++ = '-';
+			*dst++ = 'l';
+			strcpy(dst,argv[++i]);
+			dst += strlen(dst)+1;
+
+		} else if (!strncmp(argv[i],"-l",2)) {
+			fcopy = true;
+
+		} else if (!strcmp(argv[i],"--library")) {
+			*dargv++ = dst;
+			*dst++ = '-';
+			*dst++ = 'l';
+			strcpy(dst,argv[++i]);
+			dst += strlen(dst)+1;
+
+		} else if (!strncmp(argv[i],"--library=",10)) {
+			*dargv++ = dst;
+			*dst++ = '-';
+			*dst++ = 'l';
+			strcpy(dst,&argv[++i][10]);
+			dst += strlen(dst)+1;
+
+		} else if (!strcmp(argv[i],"-L")) {
+			*dargv++ = dst;
+			*dst++ = '-';
+			*dst++ = 'L';
+			strcpy(dst,argv[++i]);
+			dst += strlen(dst)+1;
+
+		} else if (!strncmp(argv[i],"-L",2)) {
+			fcopy = true;
+
+		} else if (!strcmp(argv[i],"--library-path")) {
+			*dargv++ = dst;
+			*dst++ = '-';
+			*dst++ = 'L';
+			strcpy(dst,argv[++i]);
+			dst += strlen(dst)+1;
+
+		} else if (!strncmp(argv[i],"--library-path=",15)) {
+			*dargv++ = dst;
+			*dst++ = '-';
+			*dst++ = 'L';
+			strcpy(dst,&argv[++i][15]);
+			dst += strlen(dst)+1;
+		} else {
+			fcopy = true;
+		}
+
+		if (fcopy) {
+			*dargv++ = dst;
+			strcpy(dst,argv[i]);
+			dst += strlen(dst)+1;
+		}
+	}
+
+	/* update argc,argv */
+	argc = dargv - sargv->dargv;
+	argv = sargv->dargv;
+
+	/* allocate split vectors */
 	if ((sargv->targv = calloc(2*(argc+1),sizeof(char *))))
 		sargv->cargv = sargv->targv + argc + 1;
 	else
@@ -991,14 +1093,19 @@ int slbt_get_driver_ctx(
 		};
 	}
 
+	sargv.dargs = 0;
+	sargv.dargv = 0;
+	sargv.targv = 0;
+	sargv.cargv = 0;
+
 	if (slbt_split_argv(argv,flags,&sargv,fdctx->fderr))
-		return -1;
+		return slbt_free_argv_buffer(&sargv);
 
 	if (!(meta = argv_get(
 			sargv.targv,optv,
-			slbt_argv_flags(flags) | ARGV_CLONE_VECTOR,
+			slbt_argv_flags(flags),
 			fdctx->fderr)))
-		return -1;
+		return slbt_free_argv_buffer(&sargv);
 
 	lconf   = 0;
 	program = argv_program_name(argv[0]);
@@ -1020,7 +1127,8 @@ int slbt_get_driver_ctx(
 					if (flags & SLBT_DRIVER_VERBOSITY_USAGE)
 						return slbt_driver_usage(
 							fdctx->fdout,program,
-							entry->arg,optv,meta);
+							entry->arg,optv,
+							meta,&sargv);
 
 				case TAG_VERSION:
 					cctx.drvflags |= SLBT_DRIVER_VERSION;
@@ -1301,14 +1409,12 @@ int slbt_get_driver_ctx(
 			cctx.tag = SLBT_TAG_CC;
 
 	/* driver context */
-	if (!(ctx = slbt_driver_ctx_alloc(meta,fdctx,&cctx)))
+	if (!(ctx = slbt_driver_ctx_alloc(meta,fdctx,&cctx,&sargv)))
 		return slbt_get_driver_ctx_fail(0,meta);
 
 	/* ctx */
 	ctx->ctx.program	= program;
 	ctx->ctx.cctx		= &ctx->cctx;
-	ctx->targv		= sargv.targv;
-	ctx->cargv		= sargv.cargv;
 
 	ctx->cctx.targv		= sargv.targv;
 	ctx->cctx.cargv		= sargv.cargv;
@@ -1370,11 +1476,12 @@ int slbt_get_driver_ctx(
 
 static void slbt_free_driver_ctx_impl(struct slbt_driver_ctx_alloc * ictx)
 {
-	if (ictx->ctx.targv)
-		free(ictx->ctx.targv);
-
 	if (ictx->ctx.libname)
 		free(ictx->ctx.libname);
+
+	free(ictx->ctx.dargs);
+	free(ictx->ctx.dargv);
+	free(ictx->ctx.targv);
 
 	slbt_free_host_params(&ictx->ctx.host);
 	slbt_free_host_params(&ictx->ctx.ahost);

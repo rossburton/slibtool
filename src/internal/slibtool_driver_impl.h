@@ -76,6 +76,13 @@ enum app_tags {
 	TAG_THREAD_SAFE,
 };
 
+struct slbt_split_vector {
+	char *		dargs;
+	char **		dargv;
+	char **		targv;
+	char **		cargv;
+};
+
 struct slbt_host_strs {
 	char *		machine;
 	char *		host;
@@ -94,6 +101,8 @@ struct slbt_driver_ctx_impl {
 	struct slbt_host_strs	ahost;
 	struct slbt_fd_ctx	fdctx;
 	char *			libname;
+	char *			dargs;
+	char **			dargv;
 	char **			targv;
 	char **			cargv;
 	struct slbt_error_info**errinfp;
