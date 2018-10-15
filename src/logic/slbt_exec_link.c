@@ -747,32 +747,17 @@ static int slbt_exec_link_create_dep_file(
 		path    = 0;
 		mapinfo = 0;
 
-		if (!strcmp(*parg,"-l")) {
-			popt = *parg++;
-			plib = *parg;
-		} else if (!strcmp(*parg,"--library")) {
-			popt = *parg++;
-			plib = *parg;
-		} else if (!strncmp(*parg,"-l",2)) {
+		if (!strncmp(*parg,"-l",2)) {
 			popt = *parg;
 			plib = popt + 2;
-		} else if (!strncmp(*parg,"--library=",10)) {
-			popt = *parg;
-			plib = popt + 10;
-		} else if (!strcmp(*parg,"-L")) {
-			popt = *parg++;
-			path = *parg;
-		} else if (!strcmp(*parg,"--library-path")) {
-			popt = *parg++;
-			path = *parg;
+
 		} else if (!strncmp(*parg,"-L",2)) {
 			popt = *parg;
 			path = popt + 2;
-		} else if (!strncmp(*parg,"--library-path=",15)) {
-			popt = *parg;
-			path = popt + 15;
+
 		} else if (!strncmp(*parg,"-f",2)) {
 			(void)0;
+
 		} else if ((popt = strrchr(*parg,'.')) && !strcmp(popt,".la")) {
 			/* import dependency list */
 			if ((base = strrchr(*parg,'/')))
