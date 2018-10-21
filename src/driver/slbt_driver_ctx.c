@@ -368,7 +368,7 @@ static int slbt_split_argv(
 			*dargv++ = dst;
 			*dst++ = '-';
 			*dst++ = 'L';
-			strcpy(dst,&argv[++i][15]);
+			strcpy(dst,&argv[i][15]);
 			dst += strlen(dst)+1;
 		} else {
 			fcopy = true;
