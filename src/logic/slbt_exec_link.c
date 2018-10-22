@@ -634,9 +634,11 @@ static int slbt_exec_link_finalize_argument_vector(
 		arg = *parg;
 		dot = strrchr(arg,'.');
 
+		/* object input argument? */
 		if (dot && (!strcmp(dot,".o") || !strcmp(dot,".lo"))) {
 			*oarg++ = *parg++;
 
+		/* --whole-archive input argument? */
 		} else if ((arg[0] == '-')
 				&& (arg[1] == 'W')
 				&& (arg[2] == 'l')
@@ -650,52 +652,54 @@ static int slbt_exec_link_finalize_argument_vector(
 			*oarg++ = *parg++;
 			*oarg++ = *parg++;
 
+		/* local archive input argument? */
 		} else if (dot && !strcmp(dot,arsuffix)) {
 			*oarg++ = *parg++;
 
-		} else {
-			/* not a -l argument? */
-			if ((parg[0][0] != '-') || (parg[0][1] != 'l')) {
-				if (!strncmp(*parg,"-USLIBTOOL_PLACEHOLDER_",23))
-					parg++;
-				else
-					*aarg++ = *parg++;
+		/* -l argument? */
+		} else if ((parg[0][0] == '-') && (parg[0][1] == 'l')) {
+			/* find the previous occurence of this -l argument */
+			for (rarg=0, larg=&aarg[-1]; !rarg && (larg>=aargv); larg--)
+				if (!strcmp(*larg,*parg))
+					rarg = larg;
+
+			/* first occurence of this specific -l argument? */
+			if (!rarg) {
+				*aarg++ = *parg++;
 
 			} else {
-				/* find the previus occurence of this -l argument */
-				for (rarg=0, larg=&aarg[-1]; !rarg && (larg>=aargv); larg--)
-					if (!strcmp(*larg,*parg))
-						rarg = larg;
+				larg = rarg;
 
-				/* first occurence of this specific -l argument? */
-				if (!rarg) {
-					*aarg++ = *parg++;
+				/* if all -l arguments following the previous */
+				/* occurence had already appeared before the */
+				/* previous argument, then the current      */
+				/* occurence is redundant.                 */
+
+				for (darg=&larg[1]; rarg && darg<aarg; darg++) {
+					/* only test -l arguments */
+					if ((darg[0][0] == '-') && (darg[0][1] == 'l')) {
+						for (rarg=0, earg=aargv; !rarg && earg<larg; earg++)
+							if (!strcmp(*earg,*darg))
+								rarg = darg;
+					}
+				}
+
+				/* final verdict: repeated -l argument? */
+				if (rarg) {
+					parg++;
 
 				} else {
-					larg = rarg;
-
-					/* if all -l arguments following the previous */
-					/* occurence had already appeared before the */
-					/* previous argument, then the current      */
-					/* occurence is redundant.                 */
-
-					for (darg=&larg[1]; rarg && darg<aarg; darg++) {
-						/* only test -l arguments */
-						if ((darg[0][0] == '-') && (darg[0][1] == 'l')) {
-							for (rarg=0, earg=aargv; !rarg && earg<larg; earg++)
-								if (!strcmp(*earg,*darg))
-									rarg = darg;
-						}
-					}
-
-					/* final verdict: repeated -l argument? */
-					if (rarg)
-						parg++;
-
-					else
-						*aarg++ = *parg++;
+					*aarg++ = *parg++;
 				}
 			}
+
+		/* placeholder argument? */
+		} else if (!strncmp(*parg,"-USLIBTOOL_PLACEHOLDER_",23)) {
+			parg++;
+
+		/* all other arguments */
+		} else {
+			*aarg++ = *parg++;
 		}
 	}
 
