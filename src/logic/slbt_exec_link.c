@@ -644,6 +644,10 @@ static int slbt_exec_link_finalize_argument_vector(
 			*oarg++ = *parg++;
 			*oarg++ = *parg++;
 			*oarg++ = *parg++;
+
+		} else if (dot && !strcmp(dot,arsuffix)) {
+			*oarg++ = *parg++;
+
 		} else {
 			*aarg++ = *parg++;
 		}
