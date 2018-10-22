@@ -693,6 +693,20 @@ static int slbt_exec_link_finalize_argument_vector(
 				}
 			}
 
+		/* -L argument? */
+		} else if ((parg[0][0] == '-') && (parg[0][1] == 'L')) {
+			/* find a previous occurence of this -L argument */
+			for (rarg=0, larg=aargv; !rarg && (larg<aarg); larg++)
+				if (!strcmp(*larg,*parg))
+					rarg = larg;
+
+			/* repeated -L argument? */
+			if (rarg) {
+				parg++;
+			} else {
+				*aarg++ = *parg++;
+			}
+
 		/* placeholder argument? */
 		} else if (!strncmp(*parg,"-USLIBTOOL_PLACEHOLDER_",23)) {
 			parg++;
