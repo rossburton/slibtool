@@ -656,7 +656,10 @@ static int slbt_exec_link_finalize_argument_vector(
 		} else {
 			/* not a -l argument? */
 			if ((parg[0][0] != '-') || (parg[0][1] != 'l')) {
-				*aarg++ = *parg++;
+				if (!strncmp(*parg,"-USLIBTOOL_PLACEHOLDER_",23))
+					parg++;
+				else
+					*aarg++ = *parg++;
 
 			} else {
 				/* find the previus occurence of this -l argument */
