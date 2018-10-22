@@ -577,6 +577,10 @@ static int slbt_exec_link_finalize_argument_vector(
 	char **		parg;
 	char **		aarg;
 	char **		oarg;
+	char **		larg;
+	char **		darg;
+	char **		earg;
+	char **		rarg;
 	char **		aargv;
 	char **		oargv;
 	char **		cap;
@@ -614,7 +618,8 @@ static int slbt_exec_link_finalize_argument_vector(
 	/* (program name) */
 	parg = &base[1];
 
-	/* split object args from all other args, record output annotation */
+	/* split object args from all other args, record output */
+	/* annotation, and remove redundant -l arguments       */
 	for (; *parg; ) {
 		if (ectx->lout[0] == parg) {
 			ectx->lout[0] = &aarg[0];
@@ -649,7 +654,45 @@ static int slbt_exec_link_finalize_argument_vector(
 			*oarg++ = *parg++;
 
 		} else {
-			*aarg++ = *parg++;
+			/* not a -l argument? */
+			if ((parg[0][0] != '-') || (parg[0][1] != 'l')) {
+				*aarg++ = *parg++;
+
+			} else {
+				/* find the previus occurence of this -l argument */
+				for (rarg=0, larg=&aarg[-1]; !rarg && (larg>=aargv); larg--)
+					if (!strcmp(*larg,*parg))
+						rarg = larg;
+
+				/* first occurence of this specific -l argument? */
+				if (!rarg) {
+					*aarg++ = *parg++;
+
+				} else {
+					larg = rarg;
+
+					/* if all -l arguments following the previous */
+					/* occurence had already appeared before the */
+					/* previous argument, then the current      */
+					/* occurence is redundant.                 */
+
+					for (darg=&larg[1]; rarg && darg<aarg; darg++) {
+						/* only test -l arguments */
+						if ((darg[0][0] == '-') && (darg[0][1] == 'l')) {
+							for (rarg=0, earg=aargv; !rarg && earg<larg; earg++)
+								if (!strcmp(*earg,*darg))
+									rarg = darg;
+						}
+					}
+
+					/* final verdict: repeated -l argument? */
+					if (rarg)
+						parg++;
+
+					else
+						*aarg++ = *parg++;
+				}
+			}
 		}
 	}
 
@@ -669,6 +712,9 @@ static int slbt_exec_link_finalize_argument_vector(
 
 	for (; src<cap; )
 		*dst++ = *src++;
+
+	/* properly null-terminate argv, accounting for redundant -l arguments */
+	*dst = 0;
 
 	/* output annotation */
 	if (ectx->lout[0]) {
