@@ -119,6 +119,8 @@ struct slbt_exec_ctx_impl {
 	size_t			size;
 	struct slbt_exec_ctx	ctx;
 	int			fdwrapper;
+	char **			lout[2];
+	char **			mout[2];
 	char *			vbuffer[];
 };
 

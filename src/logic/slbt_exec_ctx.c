@@ -143,6 +143,8 @@ int  slbt_get_exec_ctx(
 {
 	struct slbt_exec_ctx_impl *	ictx;
 	char **				parg;
+	char **				src;
+	char **				dst;
 	char *				ch;
 	char *				mark;
 	const char *			dmark;
@@ -458,6 +460,19 @@ int  slbt_get_exec_ctx(
 	/* argument strings shadow copy */
 	memcpy(ictx->shadow,ictx->args,ictx->size);
 
+	/* compile mode: argument vector shadow copy */
+	if (dctx->cctx->mode == SLBT_MODE_COMPILE)
+		for (src=ictx->ctx.argv, dst=ictx->ctx.xargv; *src; src++, dst++)
+			*dst = *src;
+
+	/* save the full vector's lout, mout */
+	ictx->lout[0] = ictx->ctx.lout[0];
+	ictx->lout[1] = ictx->ctx.lout[1];
+
+	ictx->mout[0] = ictx->ctx.mout[0];
+	ictx->mout[1] = ictx->ctx.mout[1];
+
+	/* all done */
 	*ectx = &ictx->ctx;
 	return 0;
 }
@@ -499,6 +514,29 @@ void slbt_reset_arguments(struct slbt_exec_ctx * ectx)
 	addr = (uintptr_t)ectx - offsetof(struct slbt_exec_ctx_impl,ctx);
 	ictx = (struct slbt_exec_ctx_impl *)addr;
 	memcpy(ictx->args,ictx->shadow,ictx->size);
+}
+
+
+void slbt_reset_argvector(struct slbt_exec_ctx * ectx)
+{
+	struct slbt_exec_ctx_impl *	ictx;
+	uintptr_t			addr;
+	char ** 			src;
+	char ** 			dst;
+
+	addr = (uintptr_t)ectx - offsetof(struct slbt_exec_ctx_impl,ctx);
+	ictx = (struct slbt_exec_ctx_impl *)addr;
+
+	for (src=ectx->xargv, dst=ectx->argv; *src; src++, dst++)
+		*dst = *src;
+
+	*dst = 0;
+
+	ectx->lout[0] = ictx->lout[0];
+	ectx->lout[1] = ictx->lout[1];
+
+	ectx->mout[0] = ictx->mout[0];
+	ectx->mout[1] = ictx->mout[1];
 }
 
 
