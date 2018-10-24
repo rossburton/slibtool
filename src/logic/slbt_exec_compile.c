@@ -30,6 +30,96 @@ static int slbt_exec_compile_remove_file(
 	return SLBT_SYSTEM_ERROR(dctx);
 }
 
+static int slbt_exec_compile_finalize_argument_vector(
+	const struct slbt_driver_ctx *	dctx,
+	struct slbt_exec_ctx *		ectx)
+{
+	char *		sargv[1024];
+	char **		sargvbuf;
+	char **		base;
+	char **		parg;
+	char **		aarg;
+	char **		aargv;
+	char **		cap;
+	char **		src;
+	char **		dst;
+
+	/* vector size */
+	base = ectx->argv;
+	parg = ectx->argv;
+
+	for (; *parg; )
+		parg++;
+
+	/* buffer */
+	if (parg - base < 1024) {
+		aargv    = sargv;
+		aarg     = aargv;
+		sargvbuf = 0;
+
+	} else if (!(sargvbuf = calloc(parg-base+1,sizeof(char *)))) {
+		return SLBT_SYSTEM_ERROR(dctx);
+
+	} else {
+		aargv = sargvbuf;
+		aarg  = aargv;
+	}
+
+	/* (program name) */
+	parg = &base[1];
+
+	/* split object args from all other args, record output */
+	/* annotation, and remove redundant -l arguments       */
+	for (; *parg; ) {
+		if (ectx->lout[0] == parg) {
+			ectx->lout[0] = &aarg[0];
+			ectx->lout[1] = &aarg[1];
+		}
+
+		if (ectx->mout[0] == parg) {
+			ectx->mout[0] = &aarg[0];
+			ectx->mout[1] = &aarg[1];
+		}
+
+		/* placeholder argument? */
+		if (!strncmp(*parg,"-USLIBTOOL_PLACEHOLDER_",23)) {
+			parg++;
+		} else {
+			*aarg++ = *parg++;
+		}
+	}
+
+	/* (program name) */
+	dst = &base[1];
+
+	/* join all other args */
+	src = aargv;
+	cap = aarg;
+
+	for (; src<cap; )
+		*dst++ = *src++;
+
+	/* properly null-terminate argv, accounting for redundant arguments */
+	*dst = 0;
+
+	/* output annotation */
+	if (ectx->lout[0]) {
+		ectx->lout[0] = &base[1] + (ectx->lout[0] - aargv);
+		ectx->lout[1] = ectx->lout[0] + 1;
+	}
+
+	if (ectx->mout[0]) {
+		ectx->mout[0] = &base[1] + (ectx->mout[0] - aargv);
+		ectx->mout[1] = ectx->mout[0] + 1;
+	}
+
+	/* all done */
+	if (sargvbuf)
+		free(sargvbuf);
+
+	return 0;
+}
+
 int  slbt_exec_compile(
 	const struct slbt_driver_ctx *	dctx,
 	struct slbt_exec_ctx *		ectx)
@@ -83,6 +173,9 @@ int  slbt_exec_compile(
 		*ectx->lout[0] = "-o";
 		*ectx->lout[1] = ectx->lobjname;
 
+		if (slbt_exec_compile_finalize_argument_vector(dctx,ectx))
+			return SLBT_NESTED_ERROR(dctx);
+
 		if (!(cctx->drvflags & SLBT_DRIVER_SILENT)) {
 			if (slbt_output_compile(dctx,ectx)) {
 				slbt_free_exec_ctx(actx);
@@ -94,6 +187,9 @@ int  slbt_exec_compile(
 			slbt_free_exec_ctx(actx);
 			return SLBT_SYSTEM_ERROR(dctx);
 		}
+
+		if (cctx->drvflags & SLBT_DRIVER_STATIC)
+			slbt_reset_argvector(ectx);
 	}
 
 	/* static archive object */
@@ -107,6 +203,9 @@ int  slbt_exec_compile(
 
 		*ectx->lout[0] = "-o";
 		*ectx->lout[1] = ectx->aobjname;
+
+		if (slbt_exec_compile_finalize_argument_vector(dctx,ectx))
+			return SLBT_NESTED_ERROR(dctx);
 
 		if (!(cctx->drvflags & SLBT_DRIVER_SILENT)) {
 			if (slbt_output_compile(dctx,ectx)) {
