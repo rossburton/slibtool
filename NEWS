@@ -1,3 +1,27 @@
+0.5.26:
+
+This patch release follows significant improvements in, as well as additions
+to slibtool's functionality. Most notably, with the additions of --heuristics
+and the rlibtool convenience symlink, slibtool may now automagically operate
+in the exact same mode (static only, shared only, or both) as the generated
+libtool script for which it serves as a surrogate.
+
+- utility: --heuristics support: added the 'rlibtool' convenience symlink.
+- utility: convenience symlinks: added rclibtool, rdlibtool, and rdclibtool.
+- link mode: properly handle local archives.
+- link mode: remove placeholder arguments.
+- link mode: remove redundant -l arguments.
+- link mode: remove redundant -L arguments.
+- compile mode: remove placeholder arguments.
+- driver: added --heuristics support.
+- driver: slbt_get_driver_ctx(): support stack-based argv.
+- driver: output error vector upon post-argv-parsing failures.
+- driver: execution context: added slbt_reset_argvector().
+- driver: properly normalize --library-path=<path> arguments.
+- internals: slbt_mkdir() now uses the context's fdcwd.
+- internals: slbt_adjust_linker_argument() now uses the context's fdcwd.
+- internals: -shared/-static heuristics: added slbt_get_lconf_flags().
+
 0.5.25:
 
 This patch release follows several important enhancements in slibtool's
