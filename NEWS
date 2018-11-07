@@ -1,3 +1,14 @@
+0.5.27:
+
+This patch release provides an important enhancement with respect to the
+identification of the ar tool to be invoked in slibtool's link mode. More
+specifically, rather than relying on the presence of <target>-ar, slibtool
+will now attempt to invoke, as needed, several alternate ar tools in the
+following order: <target>-ar, <target>-<compiler>-ar, and, in the case
+of the native target, also <compiler>-ar and ar.
+
+- driver: slbt_init_host_params(): enhance the target-ar related logic.
+
 0.5.26:
 
 This patch release follows significant improvements in, as well as additions
