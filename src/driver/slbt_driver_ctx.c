@@ -7,7 +7,11 @@
 #include <stdint.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdlib.h>
+#include <stdbool.h>
 #include <fcntl.h>
+#include <spawn.h>
+#include <sys/wait.h>
 
 #define ARGV_DRIVER
 
@@ -17,6 +21,8 @@
 #include "slibtool_errinfo_impl.h"
 #include "slibtool_lconf_impl.h"
 #include "argv/argv.h"
+
+extern char ** environ;
 
 /* package info */
 static const struct slbt_source_version slbt_src_version = {
@@ -542,6 +548,10 @@ static int slbt_init_host_params(
 	struct slbt_host_params *	host,
 	struct slbt_host_params *	cfgmeta)
 {
+	int		ret;
+	int		arprobe;
+	int		arfd;
+	pid_t		arpid;
 	size_t		toollen;
 	char *		dash;
 	char *		base;
@@ -557,6 +567,8 @@ static int slbt_init_host_params(
 	char		machinebuf [256];
 	char *		hostquad   [4];
 	char *		machinequad[4];
+	char *		arprobeargv[4];
+	char		archivename[] = "/tmp/slibtool.ar.probe.XXXXXXXXXXXXXXXX";
 
 	/* base */
 	if ((base = strrchr(cctx->cargv[0],'/')))
@@ -698,9 +710,79 @@ static int slbt_init_host_params(
 		if (fnative) {
 			strcpy(drvhost->ar,"ar");
 			cfgmeta->ar = cfgnative;
+			arprobe = 0;
+		} else if (cctx->mode == SLBT_MODE_LINK) {
+			arprobe = true;
+		} else if (cctx->mode == SLBT_MODE_INFO) {
+			arprobe = true;
 		} else {
+			arprobe = false;
+		}
+
+		/* arprobe */
+		if (arprobe) {
 			sprintf(drvhost->ar,"%s-ar",host->host);
 			cfgmeta->ar = cfghost;
+
+			ret   = 0;
+			arpid = 0;
+			arfd  = -1;
+
+			/* empty archive */
+			if ((arfd = mkstemp(archivename)) >= 0) {
+				slbt_dprintf(arfd,"!<arch>\n");
+
+				arprobeargv[0] = drvhost->ar;
+				arprobeargv[1] = "-t";
+				arprobeargv[2] = archivename;
+				arprobeargv[3] = 0;
+
+				/* <target>-ar */
+				ret = (posix_spawnp(
+					&arpid,
+					drvhost->ar,
+					0,0,arprobeargv,
+					environ));
+			}
+
+			/* <target>-<compiler>-ar */
+			if (ret && (errno == ENOENT) && !strchr(base,'-')) {
+				sprintf(drvhost->ar,"%s-%s-ar",host->host,base);
+
+				ret = (posix_spawnp(
+					&arpid,
+					drvhost->ar,
+					0,0,arprobeargv,
+					environ));
+			}
+
+			/* <compiler>-ar */
+			if (ret && (errno == ENOENT) && !strchr(base,'-')) {
+				sprintf(drvhost->ar,"%s-ar",base);
+
+				ret = (posix_spawnp(
+					&arpid,
+					drvhost->ar,
+					0,0,arprobeargv,
+					environ));
+			}
+
+			/* if target is the native target, fallback to native ar */
+			if (ret && (errno == ENOENT) && !strcmp(host->host,SLBT_MACHINE)) {
+				strcpy(drvhost->ar,"ar");
+				cfgmeta->ar = cfgnative;
+			}
+
+			/* may not unlink before ar has exited */
+			if (arpid) {
+				waitpid(arpid,0,0);
+			}
+
+			/* clean up */
+			if (arfd >= 0) {
+				unlink(archivename);
+				close(arfd);
+			}
 		}
 
 		host->ar = drvhost->ar;
