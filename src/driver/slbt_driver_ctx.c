@@ -541,6 +541,28 @@ static void slbt_get_host_quad(
 	}
 }
 
+static void slbt_spawn_ar(char ** argv, int * ecode)
+{
+	int	estatus;
+	pid_t	pid;
+
+	*ecode = 127;
+
+	if ((pid = fork()) < 0) {
+		return;
+
+	} else if (pid == 0) {
+		execvp(argv[0],argv);
+		_exit(errno);
+
+	} else {
+		waitpid(pid,&estatus,0);
+
+		if (WIFEXITED(estatus))
+			*ecode = WEXITSTATUS(estatus);
+	}
+}
+
 static int slbt_init_host_params(
 	const struct slbt_driver_ctx *	dctx,
 	const struct slbt_common_ctx *	cctx,
@@ -548,10 +570,9 @@ static int slbt_init_host_params(
 	struct slbt_host_params *	host,
 	struct slbt_host_params *	cfgmeta)
 {
-	int		ret;
 	int		arprobe;
 	int		arfd;
-	pid_t		arpid;
+	int		ecode;
 	size_t		toollen;
 	char *		dash;
 	char *		base;
@@ -724,10 +745,6 @@ static int slbt_init_host_params(
 			sprintf(drvhost->ar,"%s-ar",host->host);
 			cfgmeta->ar = cfghost;
 
-			ret   = 0;
-			arpid = 0;
-			arfd  = -1;
-
 			/* empty archive */
 			if ((arfd = mkstemp(archivename)) >= 0) {
 				slbt_dprintf(arfd,"!<arch>\n");
@@ -738,44 +755,33 @@ static int slbt_init_host_params(
 				arprobeargv[3] = 0;
 
 				/* <target>-ar */
-				ret = (posix_spawnp(
-					&arpid,
-					drvhost->ar,
-					0,0,arprobeargv,
-					environ));
+				slbt_spawn_ar(
+					arprobeargv,
+					&ecode);
 			}
 
 			/* <target>-<compiler>-ar */
-			if (ret && (errno == ENOENT) && !strchr(base,'-')) {
+			if (ecode && !strchr(base,'-')) {
 				sprintf(drvhost->ar,"%s-%s-ar",host->host,base);
 
-				ret = (posix_spawnp(
-					&arpid,
-					drvhost->ar,
-					0,0,arprobeargv,
-					environ));
+				slbt_spawn_ar(
+					arprobeargv,
+					&ecode);
 			}
 
 			/* <compiler>-ar */
-			if (ret && (errno == ENOENT) && !strchr(base,'-')) {
+			if (ecode && !strchr(base,'-')) {
 				sprintf(drvhost->ar,"%s-ar",base);
 
-				ret = (posix_spawnp(
-					&arpid,
-					drvhost->ar,
-					0,0,arprobeargv,
-					environ));
+				slbt_spawn_ar(
+					arprobeargv,
+					&ecode);
 			}
 
 			/* if target is the native target, fallback to native ar */
-			if (ret && (errno == ENOENT) && !strcmp(host->host,SLBT_MACHINE)) {
+			if (ecode && !strcmp(host->host,SLBT_MACHINE)) {
 				strcpy(drvhost->ar,"ar");
 				cfgmeta->ar = cfgnative;
-			}
-
-			/* may not unlink before ar has exited */
-			if (arpid) {
-				waitpid(arpid,0,0);
 			}
 
 			/* clean up */
