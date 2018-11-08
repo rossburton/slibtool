@@ -1,3 +1,11 @@
+0.5.28:
+
+This patch release allows the enhanced target-ar logic that was
+introduced in the previous patch release to properly work on legacy
+systems with a tricky posix_spawnp() implementation.
+
+- driver: enhanced target-ar logic: accommodate legacy systems.
+
 0.5.27:
 
 This patch release provides an important enhancement with respect to the
