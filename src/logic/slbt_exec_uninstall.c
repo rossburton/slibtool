@@ -151,9 +151,10 @@ static int slbt_exec_uninstall_entry(
 	char **				parg,
 	uint32_t			flags)
 {
-	char	path [PATH_MAX];
-	char	lpath[PATH_MAX];
-	char *	dot;
+	const char *	dsosuffix;
+	char *		dot;
+	char		path [PATH_MAX];
+	char		lpath[PATH_MAX];
 
 	if ((size_t)snprintf(path,PATH_MAX,"%s",
 			entry->arg) >= PATH_MAX-8)
@@ -178,14 +179,17 @@ static int slbt_exec_uninstall_entry(
 	if (slbt_exec_uninstall_fs_entry(dctx,ectx,parg,path,flags))
 		return SLBT_NESTED_ERROR(dctx);
 
+	/* dsosuffix */
+	dsosuffix = dctx->cctx->settings.dsosuffix;
+
 	/* .so symlink? */
-	strcpy(dot,".so");
+	strcpy(dot,dsosuffix);
 
 	if (!(slbt_readlink(path,lpath,sizeof(lpath))))
 		if (slbt_exec_uninstall_versioned_library(
 				dctx,ectx,parg,
 				path,lpath,
-				".so",flags))
+				dsosuffix,flags))
 			return SLBT_NESTED_ERROR(dctx);
 
 	/* .lib.a symlink? */
@@ -209,7 +213,7 @@ static int slbt_exec_uninstall_entry(
 			return SLBT_NESTED_ERROR(dctx);
 
 	/* remove .so library as needed */
-	strcpy(dot,".so");
+	strcpy(dot,dsosuffix);
 
 	if (slbt_exec_uninstall_fs_entry(dctx,ectx,parg,path,flags))
 		return SLBT_NESTED_ERROR(dctx);
