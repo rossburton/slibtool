@@ -35,41 +35,41 @@ static const struct slbt_source_version slbt_src_version = {
 /* flavor settings */
 #define SLBT_FLAVOR_SETTINGS(flavor,          \
 		bfmt,pic,                     \
-		arp,ars,dsop,dsos,            \
+		arp,ars,dsop,dsos,osds,osdf,  \
 		exep,exes,impp,imps,          \
 		ldenv)                        \
 	static const struct slbt_flavor_settings flavor = {  \
-		bfmt,arp,ars,dsop,dsos,                     \
+		bfmt,arp,ars,dsop,dsos,osds,osdf,           \
 		exep,exes,impp,imps,                       \
 		ldenv,pic}
 
 SLBT_FLAVOR_SETTINGS(host_flavor_default,       \
 	"elf","-fPIC",                          \
-	"lib",".a","lib",".so",                 \
+	"lib",".a","lib",".so",".so","",        \
 	"","","","",                            \
 	"LD_LIBRARY_PATH");
 
 SLBT_FLAVOR_SETTINGS(host_flavor_midipix,       \
 	"pe","-fPIC",                           \
-	"lib",".a","lib",".so",                 \
+	"lib",".a","lib",".so",".so","",        \
 	"","","lib",".lib.a",                   \
 	"LD_LIBRARY_PATH");
 
 SLBT_FLAVOR_SETTINGS(host_flavor_mingw,         \
 	"pe",0,                                 \
-	"lib",".a","lib",".dll",                \
+	"lib",".a","lib",".dll","",".dll",      \
 	"",".exe","lib",".dll.a",               \
 	"PATH");
 
 SLBT_FLAVOR_SETTINGS(host_flavor_cygwin,        \
 	"pe",0,                                 \
-	"lib",".a","lib",".dll",                \
+	"lib",".a","lib",".dll","",".dll",      \
 	"",".exe","lib",".dll.a",               \
 	"PATH");
 
 SLBT_FLAVOR_SETTINGS(host_flavor_darwin,        \
 	"macho","-fPIC",                        \
-	"lib",".a","lib",".dylib",              \
+	"lib",".a","lib",".dylib","",".dylib",  \
 	"","","","",                            \
 	"DYLD_LIBRARY_PATH");
 

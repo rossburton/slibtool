@@ -216,6 +216,8 @@ struct slbt_flavor_settings {
 	const char *			arsuffix;
 	const char *			dsoprefix;
 	const char *			dsosuffix;
+	const char *			osdsuffix;
+	const char *			osdfussix;
 	const char *			exeprefix;
 	const char *			exesuffix;
 	const char *			impprefix;
