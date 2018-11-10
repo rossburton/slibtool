@@ -328,6 +328,7 @@ static int slbt_exec_install_entry(
 	char *		dot;
 	char *		base;
 	char *		slash;
+	char *		suffix;
 	char		target  [PATH_MAX];
 	char		srcfile [PATH_MAX];
 	char		dstfile [PATH_MAX];
@@ -489,18 +490,37 @@ static int slbt_exec_install_entry(
 	if (frelease)
 		return 0;
 
-	/* libfoo.so.x.y.z --> libfoo.so.x */
+	/* libfoo.so.x --> libfoo.so.x.y.z */
 	strcpy(slnkname,target);
 
-	if ((dot = strrchr(slnkname,'.')))
-		*dot = 0;
+	if ((suffix = strrchr(slnkname,'.')))
+		*suffix++ = 0;
 	else
 		return SLBT_CUSTOM_ERROR(dctx,SLBT_ERR_INSTALL_FLOW);
 
 	if ((dot = strrchr(slnkname,'.')))
-		*dot = 0;
+		*dot++ = 0;
 	else
 		return SLBT_CUSTOM_ERROR(dctx,SLBT_ERR_INSTALL_FLOW);
+
+	if ((*dot < '0') || (*dot > '9'))
+		return SLBT_CUSTOM_ERROR(dctx,SLBT_ERR_INSTALL_FLOW);
+
+	/* libfoo.x.y.z.so? */
+	if ((suffix[0] < '0') || (suffix[0] > '9')) {
+		if ((dot = strrchr(slnkname,'.')))
+			dot++;
+		else
+			return SLBT_CUSTOM_ERROR(dctx,SLBT_ERR_INSTALL_FLOW);
+
+		if ((*dot < '0') || (*dot > '9'))
+			return SLBT_CUSTOM_ERROR(dctx,SLBT_ERR_INSTALL_FLOW);
+
+		for (; *suffix; )
+			*dot++ = *suffix++;
+
+		*dot++ = 0;
+	}
 
 	/* destination symlink: dstdir/libfoo.so.x */
 	if ((size_t)snprintf(dlnkname,sizeof(dlnkname),"%s/%s",
