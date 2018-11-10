@@ -78,9 +78,12 @@ static struct slbt_exec_ctx_impl * slbt_exec_ctx_alloc(
 
 	/* buffer size (ldirname, lbasename, lobjname, aobjname, etc.) */
 	if (dctx->cctx->output)
-		size += 8*strlen(dctx->cctx->output);
+		size += 9*strlen(dctx->cctx->output);
 	else if ((csrc = slbt_source_file(dctx->cctx->cargv)))
-		size += 8*strlen(csrc);
+		size += 9*strlen(csrc);
+
+	/* pessimistic: long dso suffix, long x.y.z version */
+	size += 9 * (16 + 16 + 16 + 16);
 
 	/* pessimistic argc: .libs/libfoo.so --> -L.libs -lfoo */
 	argc *= 2;
@@ -306,7 +309,7 @@ int  slbt_get_exec_ctx(
 				+ 1;
 	}
 
-	/* linking: arfilename, lafilename, laifilename, dsofilename */
+	/* linking: arfilename, lafilename, laifilename, dsobasename, dsofilename */
 	if (dctx->cctx->mode == SLBT_MODE_LINK && dctx->cctx->libname) {
 		/* arprefix, dsoprefix */
 		if (dctx->cctx->drvflags & SLBT_DRIVER_MODULE) {
@@ -349,6 +352,14 @@ int  slbt_get_exec_ctx(
 				dctx->cctx->libname);
 		ch++;
 
+
+		/* dsobasename */
+		ictx->ctx.dsobasename = ch;
+		ch += sprintf(ch,"%s%s%s",
+				ictx->ctx.ldirname,
+				dsoprefix,
+				dctx->cctx->libname);
+		ch++;
 
 		/* dsofilename */
 		ictx->ctx.dsofilename = ch;
@@ -413,15 +424,16 @@ int  slbt_get_exec_ctx(
 		if (dctx->cctx->release) {
 			ictx->ctx.relfilename = ch;
 			ch += dctx->cctx->verinfo.verinfo
-				? sprintf(ch,"%s%s%s-%s%s.%d.%d.%d",
+				? sprintf(ch,"%s%s%s-%s%s.%d.%d.%d%s",
 					ictx->ctx.ldirname,
 					dsoprefix,
 					dctx->cctx->libname,
 					dctx->cctx->release,
-					dctx->cctx->settings.dsosuffix,
+					dctx->cctx->settings.osdsuffix,
 					dctx->cctx->verinfo.major,
 					dctx->cctx->verinfo.minor,
-					dctx->cctx->verinfo.revision)
+					dctx->cctx->verinfo.revision,
+					dctx->cctx->settings.osdfussix)
 				: sprintf(ch,"%s%s%s-%s%s",
 					ictx->ctx.ldirname,
 					dsoprefix,

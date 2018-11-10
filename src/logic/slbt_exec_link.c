@@ -1247,6 +1247,7 @@ static int slbt_exec_link_create_archive(
 static int slbt_exec_link_create_library(
 	const struct slbt_driver_ctx *	dctx,
 	struct slbt_exec_ctx *		ectx,
+	const char *			dsobasename,
 	const char *			dsofilename,
 	const char *			relfilename)
 {
@@ -1299,12 +1300,13 @@ static int slbt_exec_link_create_library(
 		(void)0;
 
 	} else if (relfilename && dctx->cctx->verinfo.verinfo) {
-		if ((size_t)snprintf(soname,sizeof(soname),"-Wl,%s%s-%s%s.%d",
+		if ((size_t)snprintf(soname,sizeof(soname),"-Wl,%s%s-%s%s.%d%s",
 					ectx->sonameprefix,
 					dctx->cctx->libname,
 					dctx->cctx->release,
-					dctx->cctx->settings.dsosuffix,
-					dctx->cctx->verinfo.major)
+					dctx->cctx->settings.osdsuffix,
+					dctx->cctx->verinfo.major,
+					dctx->cctx->settings.osdfussix)
 				>= sizeof(soname))
 			return SLBT_BUFFER_ERROR(dctx);
 
@@ -1324,11 +1326,12 @@ static int slbt_exec_link_create_library(
 		*ectx->lsoname = soname;
 
 	} else if (!(dctx->cctx->drvflags & SLBT_DRIVER_AVOID_VERSION)) {
-		if ((size_t)snprintf(soname,sizeof(soname),"-Wl,%s%s%s.%d",
+		if ((size_t)snprintf(soname,sizeof(soname),"-Wl,%s%s%s.%d%s",
 					ectx->sonameprefix,
 					dctx->cctx->libname,
-					dctx->cctx->settings.dsosuffix,
-					dctx->cctx->verinfo.major)
+					dctx->cctx->settings.osdsuffix,
+					dctx->cctx->verinfo.major,
+					dctx->cctx->settings.osdfussix)
 				>= sizeof(soname))
 			return SLBT_BUFFER_ERROR(dctx);
 
@@ -1363,11 +1366,13 @@ static int slbt_exec_link_create_library(
 	} else if (dctx->cctx->drvflags & SLBT_DRIVER_AVOID_VERSION) {
 		strcpy(output,dsofilename);
 	} else {
-		if ((size_t)snprintf(output,sizeof(output),"%s.%d.%d.%d",
-					dsofilename,
+		if ((size_t)snprintf(output,sizeof(output),"%s%s.%d.%d.%d%s",
+					dsobasename,
+					dctx->cctx->settings.osdsuffix,
 					dctx->cctx->verinfo.major,
 					dctx->cctx->verinfo.minor,
-					dctx->cctx->verinfo.revision)
+					dctx->cctx->verinfo.revision,
+					dctx->cctx->settings.osdfussix)
 				>= sizeof(output))
 			return SLBT_BUFFER_ERROR(dctx);
 	}
@@ -1621,11 +1626,13 @@ static int slbt_exec_link_create_library_symlink(
 				false))
 			return SLBT_NESTED_ERROR(dctx);
 	} else {
-		sprintf(target,"%s.%d.%d.%d",
-			ectx->dsofilename,
+		sprintf(target,"%s%s.%d.%d.%d%s",
+			ectx->dsobasename,
+			dctx->cctx->settings.osdsuffix,
 			dctx->cctx->verinfo.major,
 			dctx->cctx->verinfo.minor,
-			dctx->cctx->verinfo.revision);
+			dctx->cctx->verinfo.revision,
+			dctx->cctx->settings.osdfussix);
 	}
 
 
@@ -1635,9 +1642,11 @@ static int slbt_exec_link_create_library_symlink(
 			dctx->cctx->verinfo.major);
 
 	} else if (fmajor) {
-		sprintf(lnkname,"%s.%d",
-			ectx->dsofilename,
-			dctx->cctx->verinfo.major);
+		sprintf(lnkname,"%s%s.%d%s",
+			ectx->dsobasename,
+			dctx->cctx->settings.osdsuffix,
+			dctx->cctx->verinfo.major,
+			dctx->cctx->settings.osdfussix);
 
 	} else {
 		strcpy(lnkname,ectx->dsofilename);
@@ -1683,24 +1692,26 @@ int slbt_exec_link(
 		actx = ectx;
 
 	/* libfoo.so.x.y.z */
-	if ((size_t)snprintf(soxyz,sizeof(soxyz),"%s%s%s.%d.%d.%d",
+	if ((size_t)snprintf(soxyz,sizeof(soxyz),"%s%s%s.%d.%d.%d%s",
 				ectx->sonameprefix,
 				dctx->cctx->libname,
-				dctx->cctx->settings.dsosuffix,
+				dctx->cctx->settings.osdsuffix,
 				dctx->cctx->verinfo.major,
 				dctx->cctx->verinfo.minor,
-				dctx->cctx->verinfo.revision)
+				dctx->cctx->verinfo.revision,
+				dctx->cctx->settings.osdfussix)
 			>= sizeof(soxyz)) {
 		slbt_free_exec_ctx(actx);
 		return SLBT_BUFFER_ERROR(dctx);
 	}
 
 	/* libfoo.so.x */
-	sprintf(soname,"%s%s%s.%d",
+	sprintf(soname,"%s%s%s.%d%s",
 		ectx->sonameprefix,
 		dctx->cctx->libname,
-		dctx->cctx->settings.dsosuffix,
-		dctx->cctx->verinfo.major);
+		dctx->cctx->settings.osdsuffix,
+		dctx->cctx->verinfo.major,
+		dctx->cctx->settings.osdfussix);
 
 	/* libfoo.so */
 	sprintf(solnk,"%s%s%s",
@@ -1773,6 +1784,7 @@ int slbt_exec_link(
 		/* linking: libfoo.so.x.y.z */
 		if (slbt_exec_link_create_library(
 				dctx,ectx,
+				ectx->dsobasename,
 				ectx->dsofilename,
 				ectx->relfilename)) {
 			slbt_free_exec_ctx(actx);
