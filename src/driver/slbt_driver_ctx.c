@@ -33,15 +33,45 @@ static const struct slbt_source_version slbt_src_version = {
 };
 
 /* flavor settings */
-#define SLBT_FLAVOR_SETTINGS(flavor,bfmt,pic,arp,ars,dsop,dsos,exep,exes,impp,imps,ldenv) \
-	static const struct slbt_flavor_settings flavor = {		   \
-		bfmt,arp,ars,dsop,dsos,exep,exes,impp,imps,ldenv,pic}
+#define SLBT_FLAVOR_SETTINGS(flavor,          \
+		bfmt,pic,                     \
+		arp,ars,dsop,dsos,            \
+		exep,exes,impp,imps,          \
+		ldenv)                        \
+	static const struct slbt_flavor_settings flavor = {  \
+		bfmt,arp,ars,dsop,dsos,                     \
+		exep,exes,impp,imps,                       \
+		ldenv,pic}
 
-SLBT_FLAVOR_SETTINGS(host_flavor_default, "elf",  "-fPIC","lib",".a", "lib",".so",    "","",     "",   "",       "LD_LIBRARY_PATH");
-SLBT_FLAVOR_SETTINGS(host_flavor_midipix, "pe",   "-fPIC","lib",".a", "lib",".so",    "","",     "lib",".lib.a", "LD_LIBRARY_PATH");
-SLBT_FLAVOR_SETTINGS(host_flavor_mingw,   "pe",   0,      "lib",".a", "lib",".dll",   "",".exe", "lib",".dll.a", "PATH");
-SLBT_FLAVOR_SETTINGS(host_flavor_cygwin,  "pe",   0,      "lib",".a", "lib",".dll",   "",".exe", "lib",".dll.a", "PATH");
-SLBT_FLAVOR_SETTINGS(host_flavor_darwin,  "macho","-fPIC","lib",".a", "lib",".dylib", "","",     "",   "",       "DYLD_LIBRARY_PATH");
+SLBT_FLAVOR_SETTINGS(host_flavor_default,       \
+	"elf","-fPIC",                          \
+	"lib",".a","lib",".so",                 \
+	"","","","",                            \
+	"LD_LIBRARY_PATH");
+
+SLBT_FLAVOR_SETTINGS(host_flavor_midipix,       \
+	"pe","-fPIC",                           \
+	"lib",".a","lib",".so",                 \
+	"","","lib",".lib.a",                   \
+	"LD_LIBRARY_PATH");
+
+SLBT_FLAVOR_SETTINGS(host_flavor_mingw,         \
+	"pe",0,                                 \
+	"lib",".a","lib",".dll",                \
+	"",".exe","lib",".dll.a",               \
+	"PATH");
+
+SLBT_FLAVOR_SETTINGS(host_flavor_cygwin,        \
+	"pe",0,                                 \
+	"lib",".a","lib",".dll",                \
+	"",".exe","lib",".dll.a",               \
+	"PATH");
+
+SLBT_FLAVOR_SETTINGS(host_flavor_darwin,        \
+	"macho","-fPIC",                        \
+	"lib",".a","lib",".dylib",              \
+	"","","","",                            \
+	"DYLD_LIBRARY_PATH");
 
 
 /* annotation strings */
