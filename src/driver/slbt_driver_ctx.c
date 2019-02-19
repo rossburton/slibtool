@@ -263,12 +263,14 @@ static int slbt_split_argv(
 	bool				flast;
 	bool				fcopy;
 	size_t				size;
+	const char *			base;
 	struct argv_meta *		meta;
 	struct argv_entry *		entry;
 	struct argv_entry *		mode;
 	struct argv_entry *		config;
 	struct argv_entry *		finish;
 	struct argv_entry *		features;
+	struct argv_entry *		ccwrap;
 	const struct argv_option **	popt;
 	const struct argv_option **	optout;
 	const struct argv_option *	optv[SLBT_OPTV_ELEMENTS];
@@ -311,7 +313,7 @@ static int slbt_split_argv(
 	}
 
 	/* missing all of --mode, --config, --features, and --finish? */
-	mode = config = finish = features = 0;
+	mode = config = finish = features = ccwrap = 0;
 
 	for (entry=meta->entries; entry->fopt; entry++)
 		if (entry->tag == TAG_MODE)
@@ -322,6 +324,8 @@ static int slbt_split_argv(
 			finish = entry;
 		else if (entry->tag == TAG_FEATURES)
 			features = entry;
+		else if (entry->tag == TAG_CCWRAP)
+			ccwrap = entry;
 
 	argv_free(meta);
 
@@ -422,8 +426,8 @@ static int slbt_split_argv(
 	argv = sargv->dargv;
 
 	/* allocate split vectors */
-	if ((sargv->targv = calloc(2*(argc+1),sizeof(char *))))
-		sargv->cargv = sargv->targv + argc + 1;
+	if ((sargv->targv = calloc(2*(argc+2),sizeof(char *))))
+		sargv->cargv = sargv->targv + argc + 2;
 	else
 		return -1;
 
@@ -441,12 +445,31 @@ static int slbt_split_argv(
 	for (i=0; i<ctx.unitidx; i++)
 		sargv->targv[i] = argv[i];
 
+	/* split vector marks */
+	targv = sargv->targv + i;
+	cargv = sargv->cargv;
+
+	/* known wrappers */
+	if (ctx.unitidx && !ccwrap) {
+		if ((base = strrchr(argv[i],'/')))
+			base++;
+		else if ((base = strrchr(argv[i],'\\')))
+			base++;
+		else
+			base = argv[i];
+
+		if (!strcmp(base,"ccache")
+				|| !strcmp(base,"distcc")
+				|| !strcmp(base,"compiler")
+				|| !strcmp(base,"purify")) {
+			*targv++ = "--ccwrap";
+			*targv++ = argv[i++];
+		}
+	}
+
 	/* split vectors: legacy mixture */
 	for (optout=optv; optout[0]->tag != TAG_OUTPUT; optout++)
 		(void)0;
-
-	targv = sargv->targv + i;
-	cargv = sargv->cargv;
 
 	for (; i<argc; i++) {
 		if (argv[i][0] != '-') {
@@ -1330,6 +1353,10 @@ int slbt_get_driver_ctx(
 					else
 						cctx.drvflags &= ~(uint64_t)SLBT_DRIVER_LEGABITS;
 
+					break;
+
+				case TAG_CCWRAP:
+					cctx.ccwrap = entry->arg;
 					break;
 
 				case TAG_IMPLIB:

@@ -56,6 +56,15 @@ const struct argv_option slbt_default_options[] = {
 				"and/or static archive. option syntax is "
 				"--legabits[=%s]"},
 
+	{"ccwrap",		0,TAG_CCWRAP,ARGV_OPTARG_REQUIRED,0,0,
+				"<program>",
+				"use %s as a compiler driver wrapper; "
+				"for the purpose of compatibility, "
+				"this switch may be omitted for known "
+				"wrappers (ccache, compiler, distcc, "
+				"and purify) when immediately followed "
+				"by the compiler argument."},
+
 	{"no-warnings",		0,TAG_WARNINGS,ARGV_OPTARG_NONE,0,0,0,""},
 
 	{"preserve-dup-deps",	0,TAG_DEPS,ARGV_OPTARG_NONE,0,0,0,

@@ -35,6 +35,7 @@ enum app_tags {
 	TAG_DEPS,
 	TAG_SILENT,
 	TAG_TAG,
+	TAG_CCWRAP,
 	TAG_VERBOSE,
 	TAG_TARGET,
 	TAG_HOST,

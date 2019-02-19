@@ -43,6 +43,7 @@ static int slbt_exec_compile_finalize_argument_vector(
 	char **		cap;
 	char **		src;
 	char **		dst;
+	char *		ccwrap;
 
 	/* vector size */
 	base = ectx->argv;
@@ -89,12 +90,17 @@ static int slbt_exec_compile_finalize_argument_vector(
 		}
 	}
 
-	/* (program name) */
-	dst = &base[1];
+	/* program name, ccwrap */
+	if ((ccwrap = (char *)dctx->cctx->ccwrap)) {
+		base[1] = base[0];
+		base[0] = ccwrap;
+		base++;
+	}
 
 	/* join all other args */
 	src = aargv;
 	cap = aarg;
+	dst = &base[1];
 
 	for (; src<cap; )
 		*dst++ = *src++;
@@ -126,6 +132,7 @@ int  slbt_exec_compile(
 {
 	int				ret;
 	char *				fpic;
+	char *				ccwrap;
 	struct slbt_exec_ctx *		actx = 0;
 	const struct slbt_common_ctx *	cctx = dctx->cctx;
 
@@ -153,7 +160,8 @@ int  slbt_exec_compile(
 		}
 
 	/* compile mode */
-	ectx->program = ectx->compiler;
+	ccwrap        = (char *)cctx->ccwrap;
+	ectx->program = ccwrap ? ccwrap : ectx->compiler;
 	ectx->argv    = ectx->cargv;
 
 	/* -fpic */

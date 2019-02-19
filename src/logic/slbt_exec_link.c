@@ -588,6 +588,7 @@ static int slbt_exec_link_finalize_argument_vector(
 	char **		dst;
 	char *		arg;
 	char *		dot;
+	char *		ccwrap;
 	const char *	arsuffix;
 
 	/* vector size */
@@ -717,12 +718,17 @@ static int slbt_exec_link_finalize_argument_vector(
 		}
 	}
 
-	/* (program name) */
-	dst = &base[1];
+	/* program name, ccwrap */
+	if ((ccwrap = (char *)dctx->cctx->ccwrap)) {
+		base[1] = base[0];
+		base[0] = ccwrap;
+		base++;
+	}
 
 	/* join object args */
 	src = oargv;
 	cap = oarg;
+	dst = &base[1];
 
 	for (; src<cap; )
 		*dst++ = *src++;
@@ -1254,6 +1260,7 @@ static int slbt_exec_link_create_library(
 	int	fdcwd;
 	char ** parg;
 	char ** xarg;
+	char *	ccwrap;
 	char	cwd    [PATH_MAX];
 	char	output [PATH_MAX];
 	char	soname [PATH_MAX];
@@ -1399,8 +1406,9 @@ static int slbt_exec_link_create_library(
 		return SLBT_NESTED_ERROR(dctx);
 
 	/* using alternate argument vector */
+	ccwrap        = (char *)dctx->cctx->ccwrap;
 	ectx->argv    = depsmeta.altv;
-	ectx->program = depsmeta.altv[0];
+	ectx->program = ccwrap ? ccwrap : depsmeta.altv[0];
 
 	/* sigh */
 	if (slbt_exec_link_finalize_argument_vector(dctx,ectx))
@@ -1432,6 +1440,7 @@ static int slbt_exec_link_create_executable(
 	char ** parg;
 	char ** xarg;
 	char *	base;
+	char *	ccwrap;
 	char	cwd    [PATH_MAX];
 	char	output [PATH_MAX];
 	char	wrapper[PATH_MAX];
@@ -1531,8 +1540,9 @@ static int slbt_exec_link_create_executable(
 		return SLBT_NESTED_ERROR(dctx);
 
 	/* using alternate argument vector */
+	ccwrap        = (char *)dctx->cctx->ccwrap;
 	ectx->argv    = depsmeta.altv;
-	ectx->program = depsmeta.altv[0];
+	ectx->program = ccwrap ? ccwrap : depsmeta.altv[0];
 
 	/* executable wrapper symlink */
 	if ((size_t)snprintf(wraplnk,sizeof(wraplnk),"%s.exe.wrapper",
