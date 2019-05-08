@@ -32,6 +32,16 @@ static const struct slbt_source_version slbt_src_version = {
 	SLIBTOOL_GIT_VERSION
 };
 
+/* default fd context */
+static const struct slbt_fd_ctx slbt_default_fdctx = {
+	.fdin  = STDIN_FILENO,
+	.fdout = STDOUT_FILENO,
+	.fderr = STDERR_FILENO,
+	.fdcwd = AT_FDCWD,
+	.fddst = AT_FDCWD,
+	.fdlog = (-1),
+};
+
 /* flavor settings */
 #define SLBT_FLAVOR_SETTINGS(flavor,          \
 		bfmt,pic,                     \
@@ -1223,16 +1233,8 @@ int slbt_get_driver_ctx(
 
 	argv_optv_init(slbt_default_options,optv);
 
-	if (!fdctx) {
-		fdctx = &(const struct slbt_fd_ctx) {
-			.fdin  = STDIN_FILENO,
-			.fdout = STDOUT_FILENO,
-			.fderr = STDERR_FILENO,
-			.fdlog = (-1),
-			.fdcwd = AT_FDCWD,
-			.fddst = AT_FDCWD,
-		};
-	}
+	if (!fdctx)
+		fdctx = &slbt_default_fdctx;
 
 	sargv.dargs = 0;
 	sargv.dargv = 0;
