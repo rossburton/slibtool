@@ -503,6 +503,9 @@ static int slbt_split_argv(
 		} else if (!(strcmp("Xcompiler",&argv[i][1]))) {
 			*cargv++ = argv[++i];
 
+		} else if (!(strcmp("XCClinker",&argv[i][1]))) {
+			*cargv++ = argv[++i];
+
 		} else if ((argv[i][1] == 'R')  && (argv[i][2] == 0)) {
 			*targv++ = argv[i++];
 			*targv++ = argv[i];
