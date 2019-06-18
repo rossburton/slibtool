@@ -177,7 +177,7 @@ int slbt_main(char ** argv, char ** envp, const struct slbt_fd_ctx * fdctx)
 	/* driver context */
 	if ((ret = slbt_get_driver_ctx(argv,envp,flags,fdctx,&dctx)))
 		return (ret == SLBT_USAGE)
-			? !argv || !argv[0] || !argv[1]
+			? !argv || !argv[0] || !argv[1] || !argv[2]
 			: SLBT_ERROR;
 
 	if (dctx->cctx->drvflags & SLBT_DRIVER_VERSION)

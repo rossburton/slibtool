@@ -1270,11 +1270,12 @@ int slbt_get_driver_ctx(
 			switch (entry->tag) {
 				case TAG_HELP:
 				case TAG_HELP_ALL:
-					if (flags & SLBT_DRIVER_VERBOSITY_USAGE)
-						return slbt_driver_usage(
+					return (flags & SLBT_DRIVER_VERBOSITY_USAGE)
+						? slbt_driver_usage(
 							fdctx->fdout,program,
 							entry->arg,optv,
-							meta,&sargv);
+							meta,&sargv)
+						: SLBT_USAGE;
 
 				case TAG_VERSION:
 					cctx.drvflags |= SLBT_DRIVER_VERSION;
