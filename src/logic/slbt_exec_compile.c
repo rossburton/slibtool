@@ -165,11 +165,18 @@ int  slbt_exec_compile(
 	ectx->argv    = ectx->cargv;
 
 	/* -fpic */
-	fpic = *ectx->fpic;
+	switch (cctx->tag) {
+		case SLBT_TAG_CC:
+		case SLBT_TAG_CXX:
+		case SLBT_TAG_F77:
+			fpic = cctx->settings.picswitch
+				? cctx->settings.picswitch
+				: *ectx->fpic;
+			break;
 
-	if ((cctx->tag == SLBT_TAG_CC) || (cctx->tag == SLBT_TAG_CXX))
-		if (cctx->settings.picswitch)
-			fpic = cctx->settings.picswitch;
+		default:
+			fpic = *ectx->fpic;
+	}
 
 	/* shared library object */
 	if (cctx->drvflags & SLBT_DRIVER_SHARED) {
