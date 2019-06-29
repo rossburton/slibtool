@@ -1324,6 +1324,9 @@ int slbt_get_driver_ctx(
 					else if (!strcmp("CXX",entry->arg))
 						cctx.tag = SLBT_TAG_CXX;
 
+					else if (!strcmp("FC",entry->arg))
+						cctx.tag = SLBT_TAG_FC;
+
 					else if (!strcmp("F77",entry->arg))
 						cctx.tag = SLBT_TAG_F77;
 
