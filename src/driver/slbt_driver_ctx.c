@@ -1581,9 +1581,6 @@ int slbt_get_driver_ctx(
 		if (slbt_get_lconf_flags(&ctx->ctx,lconf,&lflags) < 0)
 			return slbt_get_driver_ctx_fail(&ctx->ctx,0);
 
-		cctx.drvflags &= ~(uint64_t)SLBT_DRIVER_DISABLE_STATIC;
-		cctx.drvflags &= ~(uint64_t)SLBT_DRIVER_DISABLE_SHARED;
-
 		cctx.drvflags |= lflags;
 		cctx.drvflags |= SLBT_DRIVER_SHARED;
 		cctx.drvflags |= SLBT_DRIVER_STATIC;
