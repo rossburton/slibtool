@@ -1217,6 +1217,37 @@ static int slbt_init_link_params(struct slbt_driver_ctx_impl * ctx)
 	return 0;
 }
 
+int slbt_driver_fail_incompatible_args(
+	int				fderr,
+	uint64_t			drvflags,
+	struct argv_meta *		meta,
+	const char *			program,
+	const char *			afirst,
+	const char *			asecond)
+{
+	int fcolor;
+
+	if (drvflags & SLBT_DRIVER_VERBOSITY_ERRORS){
+		if ((fcolor = isatty(fderr)))
+			slbt_dprintf(
+				fderr,"%s%s",
+				aclr_bold,aclr_red);
+
+		slbt_dprintf(fderr,
+			"%s: error: incompatible arguments: "
+			"at the most one of %s and %s "
+			"may be used.\n",
+			program,afirst,asecond);
+
+		if (fcolor)
+			slbt_dprintf(
+				fderr,"%s",
+				aclr_reset);
+	}
+
+	return slbt_get_driver_ctx_fail(0,meta);
+}
+
 int slbt_get_driver_ctx(
 	char **				argv,
 	char **				envp,
@@ -1230,6 +1261,10 @@ int slbt_get_driver_ctx(
 	const struct argv_option *	optv[SLBT_OPTV_ELEMENTS];
 	struct argv_meta *		meta;
 	struct argv_entry *		entry;
+	struct argv_entry *		cmdstatic;
+	struct argv_entry *		cmdshared;
+	struct argv_entry *		cmdnostatic;
+	struct argv_entry *		cmdnoshared;
 	const char *			program;
 	const char *			lconf;
 	uint64_t			lflags;
@@ -1263,6 +1298,12 @@ int slbt_get_driver_ctx(
 
 	/* full annotation when annotation is on; */
 	cctx.drvflags |= SLBT_DRIVER_ANNOTATE_FULL;
+
+	/* track incompatible command-line arguments */
+	cmdstatic   = 0;
+	cmdshared   = 0;
+	cmdnostatic = 0;
+	cmdnoshared = 0;
 
 	/* get options */
 	for (entry=meta->entries; entry->fopt || entry->arg; entry++) {
@@ -1337,10 +1378,10 @@ int slbt_get_driver_ctx(
 						cctx.tag = SLBT_TAG_RC;
 
 					else if (!strcmp("disable-static",entry->arg))
-						cctx.drvflags |= SLBT_DRIVER_DISABLE_STATIC;
+						cmdnostatic = entry;
 
 					else if (!strcmp("disable-shared",entry->arg))
-						cctx.drvflags |= SLBT_DRIVER_DISABLE_SHARED;
+						cmdnoshared = entry;
 					break;
 
 				case TAG_CONFIG:
@@ -1516,11 +1557,11 @@ int slbt_get_driver_ctx(
 					break;
 
 				case TAG_DISABLE_STATIC:
-					cctx.drvflags |= SLBT_DRIVER_DISABLE_STATIC;
+					cmdnostatic = entry;
 					break;
 
 				case TAG_DISABLE_SHARED:
-					cctx.drvflags |= SLBT_DRIVER_DISABLE_SHARED;
+					cmdnoshared = entry;
 					break;
 
 				case TAG_AVOID_VERSION:
@@ -1528,23 +1569,74 @@ int slbt_get_driver_ctx(
 					break;
 
 				case TAG_SHARED:
-					cctx.drvflags |= SLBT_DRIVER_DISABLE_STATIC;
+					cmdshared = entry;
 					break;
 
 				case TAG_STATIC:
-					cctx.drvflags |= SLBT_DRIVER_DISABLE_SHARED;
+					cmdstatic = entry;
 					break;
 			}
 		}
 	}
 
+	/* incompatible command-line arguments? */
+	if (cmdstatic && cmdshared)
+		return slbt_driver_fail_incompatible_args(
+			fdctx->fderr,
+			cctx.drvflags,
+			meta,program,
+			"-static",
+			"-shared");
+
+	if (cmdstatic && cmdnostatic)
+		return slbt_driver_fail_incompatible_args(
+			fdctx->fderr,
+			cctx.drvflags,
+			meta,program,
+			"-static",
+			"--disable-static");
+
+	if (cmdshared && cmdnoshared)
+		return slbt_driver_fail_incompatible_args(
+			fdctx->fderr,
+			cctx.drvflags,
+			meta,program,
+			"-shared",
+			"--disable-shared");
+
+	if (cmdnostatic && cmdnoshared)
+		return slbt_driver_fail_incompatible_args(
+			fdctx->fderr,
+			cctx.drvflags,
+			meta,program,
+			"--disable-static",
+			"--disable-shared");
+
+	/* -static? */
+	if (cmdstatic) {
+		cctx.drvflags |= SLBT_DRIVER_STATIC;
+		cctx.drvflags |= SLBT_DRIVER_DISABLE_SHARED;
+		cctx.drvflags &= ~(uint64_t)SLBT_DRIVER_DISABLE_STATIC;
+	}
+
+	/* shared? */
+	if (cmdshared) {
+		cctx.drvflags |= SLBT_DRIVER_SHARED;
+		cctx.drvflags |= SLBT_DRIVER_DISABLE_STATIC;
+		cctx.drvflags &= ~(uint64_t)SLBT_DRIVER_DISABLE_SHARED;
+	}
+
 	/* -disable-static? */
-	if (cctx.drvflags & SLBT_DRIVER_DISABLE_STATIC)
+	if (cmdnostatic) {
+		cctx.drvflags |= SLBT_DRIVER_DISABLE_STATIC;
 		cctx.drvflags &= ~(uint64_t)SLBT_DRIVER_STATIC;
+	}
 
 	/* -disable-shared? */
-	if (cctx.drvflags & SLBT_DRIVER_DISABLE_SHARED)
+	if (cmdnoshared) {
+		cctx.drvflags |= SLBT_DRIVER_DISABLE_SHARED;
 		cctx.drvflags &= ~(uint64_t)SLBT_DRIVER_SHARED;
+	}
 
 	/* debug: raw argument vector */
 	if (cctx.drvflags & SLBT_DRIVER_DEBUG)
@@ -1584,6 +1676,16 @@ int slbt_get_driver_ctx(
 		cctx.drvflags |= lflags;
 		cctx.drvflags |= SLBT_DRIVER_SHARED;
 		cctx.drvflags |= SLBT_DRIVER_STATIC;
+
+		if (cmdstatic) {
+			cctx.drvflags |= SLBT_DRIVER_DISABLE_SHARED;
+			cctx.drvflags &= ~(uint64_t)SLBT_DRIVER_DISABLE_STATIC;
+		}
+
+		if (cmdshared) {
+			cctx.drvflags |= SLBT_DRIVER_DISABLE_STATIC;
+			cctx.drvflags &= ~(uint64_t)SLBT_DRIVER_DISABLE_SHARED;
+		}
 
 		/* -disable-static? */
 		if (cctx.drvflags & SLBT_DRIVER_DISABLE_STATIC)
