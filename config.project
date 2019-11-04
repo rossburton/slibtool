@@ -18,8 +18,8 @@ mb_use_custom_cfgtest=no
 # pkgconfig
 mb_pkgname='slibtool'
 mb_pkgdesc='a surrogate libtool implementation, written in C'
-mb_pkgusrc='https://dl.midipix.org/slibtool/'
-mb_pkgrepo='git://midipix.org/slibtool'
+mb_pkgusrc='https://dl.foss21.org/slibtool/'
+mb_pkgrepo='git://foss21.org/slibtool'
 mb_pkgpsrc=
 mb_pkgdurl=
 mb_pkgdefs=

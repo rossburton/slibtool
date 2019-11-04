@@ -140,13 +140,13 @@ of such hidden bugs, see commits [94d109f], [1142bf2], and [55c95a8].
 
 `slibtool` is distributed under a permissive [MIT license].
 
-[MIT license]:  http://git.midipix.org/cgit.cgi/slibtool/tree/COPYING.SLIBTOOL
+[MIT license]:  http://git.foss21.org/slibtool/tree/COPYING.SLIBTOOL
 [libltdl]:      https://www.gnu.org/software/libtool/manual/html_node/Using-libltdl.html#Using-libltdl
 [dlopen()]:     http://pubs.opengroup.org/onlinepubs/9699919799/functions/dlopen.html
-[CONTRIB]:      http://git.midipix.org/cgit.cgi/slibtool/tree/CONTRIB
+[CONTRIB]:      http://git.foss21.org/slibtool/tree/CONTRIB
 [libtool]:      https://www.gnu.org/software/libtool/
 [#midipix]:     irc://irc.freenode.net/#midipix
 [cparser]:      http://pp.ipd.kit.edu/git/cparser/
-[94d109f]:      http://git.midipix.org/cgit.cgi/slibtool/commit/?id=94d109fa418c024c214a50d645624e2e2935e6d1
-[1142bf2]:      http://git.midipix.org/cgit.cgi/slibtool/commit/?id=1142bf2e13f411cf967c1ed8b4060d7829eb13bb
-[55c95a8]:      http://git.midipix.org/cgit.cgi/slibtool/commit/?id=55c95a829928ae9f053678a58a2145276cad9c08
+[94d109f]:      http://git.foss21.org/slibtool/commit/?id=94d109fa418c024c214a50d645624e2e2935e6d1
+[1142bf2]:      http://git.foss21.org/slibtool/commit/?id=1142bf2e13f411cf967c1ed8b4060d7829eb13bb
+[55c95a8]:      http://git.foss21.org/slibtool/commit/?id=55c95a829928ae9f053678a58a2145276cad9c08

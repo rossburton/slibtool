@@ -17,7 +17,7 @@
 				| SLBT_DRIVER_VERBOSITY_USAGE
 #endif
 
-static const char vermsg[] = "%s%s%s (git://midipix.org/slibtool): "
+static const char vermsg[] = "%s%s%s (git://foss21.org/slibtool): "
 			     "version %s%d.%d.%d%s.\n"
 			     "%s%s%s%s%s\n";
 
