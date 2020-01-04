@@ -47,6 +47,14 @@ effort, ease of customization, and long-term maintenance.
     - the compiler should support -std=c99;
     - the system's libc should support -D_XOPEN_SOURCE=700.
 
+If building for (native) mingw development, please cross-build slibtool
+under your posix environment of choice (e.g. midipix, cygwin, msys2) and
+install it alongside the rest of your (cross-built) mingw toolchain.
+
+If your system libc only supports -D_XOPEN_SOURCE=600 then you should be
+able to build slibtool after slightly tweaking the code and/or setting
+a few config-time environment variables (such as CFLAGS and LDFLAGS).
+
 ## Usage
 
 With most packages, simply adding `LIBTOOL=slibtool` to the `make` invocation
