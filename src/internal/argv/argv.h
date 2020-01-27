@@ -2,7 +2,6 @@
 /*  argv.h: a thread-safe argument vector parser and usage screen generator */
 /*  Copyright (C) 2015--2018  Z. Gilboa                                     */
 /*  Released under the Standard MIT License; see COPYING.SLIBTOOL.          */
-/*  This file is (also) part of sofort: portable software project template. */
 /****************************************************************************/
 
 #ifndef ARGV_H
