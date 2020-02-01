@@ -8,6 +8,7 @@
 #define SLIBTOOL_READLINK_IMPL_H
 
 #include <unistd.h>
+#include <errno.h>
 
 static inline int slbt_readlink(
 	const char *	restrict path,
@@ -16,11 +17,12 @@ static inline int slbt_readlink(
 {
 	ssize_t ret;
 
-	if ((ret = readlink(path,buf,bufsize)) <= 0)
+	if ((ret = readlink(path,buf,bufsize)) <= 0) {
 		return -1;
-	else if (ret == bufsize)
+	} else if (ret == bufsize) {
+		errno = ENOBUFS;
 		return -1;
-	else {
+	} else {
 		buf[ret] = 0;
 		return 0;
 	}
