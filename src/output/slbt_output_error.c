@@ -49,7 +49,7 @@ static const char * slbt_output_strerror(
 		return "(see child process error messages)";
 
 	else if (erri->esyscode == ENOBUFS)
-		return "input error: string length exceeds buffer size.";
+		return "input error: string length exceeds buffer size";
 
 	else
 		return strerror_r(erri->esyscode,*errbuf,sizeof(*errbuf))
