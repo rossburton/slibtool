@@ -1217,7 +1217,7 @@ static int slbt_init_link_params(struct slbt_driver_ctx_impl * ctx)
 	return 0;
 }
 
-int slbt_driver_fail_incompatible_args(
+static int slbt_driver_fail_incompatible_args(
 	int				fderr,
 	uint64_t			drvflags,
 	struct argv_meta *		meta,
