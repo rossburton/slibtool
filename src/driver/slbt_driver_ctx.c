@@ -810,6 +810,7 @@ static int slbt_init_host_params(
 		if (arprobe) {
 			sprintf(drvhost->ar,"%s-ar",host->host);
 			cfgmeta->ar = cfghost;
+			ecode       = 127;
 
 			/* empty archive */
 			if ((arfd = mkstemp(archivename)) >= 0) {
