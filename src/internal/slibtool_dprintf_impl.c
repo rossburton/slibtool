@@ -10,6 +10,8 @@
 #include <unistd.h>
 #include <errno.h>
 
+#include "slibtool_dprintf_impl.h"
+
 int slbt_dprintf(int fd, const char * fmt, ...)
 {
 	int	ret;
