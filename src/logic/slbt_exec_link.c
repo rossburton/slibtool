@@ -1306,6 +1306,15 @@ static int slbt_exec_link_create_library(
 	if ((dctx->cctx->drvflags & SLBT_DRIVER_IMAGE_MACHO)) {
 		(void)0;
 
+	} else if (dctx->cctx->drvflags & SLBT_DRIVER_MODULE) {
+		if ((size_t)snprintf(soname,sizeof(soname),"-Wl,%s",
+					dctx->cctx->output)
+				>= sizeof(soname))
+			return SLBT_BUFFER_ERROR(dctx);
+
+		*ectx->soname  = "-Wl,-soname";
+		*ectx->lsoname = soname;
+
 	} else if (relfilename && dctx->cctx->verinfo.verinfo) {
 		if ((size_t)snprintf(soname,sizeof(soname),"-Wl,%s%s-%s%s.%d%s",
 					ectx->sonameprefix,
@@ -1368,7 +1377,9 @@ static int slbt_exec_link_create_library(
 	}
 
 	/* output */
-	if (relfilename) {
+	if (dctx->cctx->drvflags & SLBT_DRIVER_MODULE) {
+		strcpy(output,dctx->cctx->output);
+	} else if (relfilename) {
 		strcpy(output,relfilename);
 	} else if (dctx->cctx->drvflags & SLBT_DRIVER_AVOID_VERSION) {
 		strcpy(output,dsofilename);
@@ -1788,6 +1799,21 @@ int slbt_exec_link(
 				ectx->dsofilename,
 				false))
 			return SLBT_NESTED_ERROR(dctx);
+
+	/* dynaic library via -module */
+	if (dctx->cctx->drvflags & SLBT_DRIVER_MODULE) {
+		if (slbt_exec_link_create_library(
+				dctx,ectx,
+				ectx->dsobasename,
+				ectx->dsofilename,
+				ectx->relfilename)) {
+			slbt_free_exec_ctx(actx);
+			return SLBT_NESTED_ERROR(dctx);
+		}
+
+		slbt_free_exec_ctx(actx);
+		return 0;
+	}
 
 	/* dynamic library */
 	if (dot && !strcmp(dot,".la") && dctx->cctx->rpath && !fstaticonly) {
