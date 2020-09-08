@@ -1,3 +1,21 @@
+0.5.29:
+
+This patch release provides a few important additions and bug fixes,
+as well as several improvements in slibtool's own build system. In
+addition, it denotes the (semantic) transition from midipix.org
+to foss21.org.
+
+- driver: added F77 support.
+- driver: added -XCClinker support.
+- driver: added FC support.
+- driver: host flavors: added suffixed suffixes support.
+- driver: --heuristics: respect explicit --disable-shared and/or -static.
+- driver: resolve conflicting and/or incompatible command-line arguments.
+- driver, link mode: properly implement the -module semantics.
+- driver, compile & link mode: support arbitrary & known compiler wrappers.
+- link mode: host flavors: properly support suffixed suffixes.
+- install mode: host flavors: properly support suffixed suffixes.
+
 0.5.28:
 
 This patch release allows the enhanced target-ar logic that was
