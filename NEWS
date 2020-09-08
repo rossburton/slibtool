@@ -1,3 +1,11 @@
+0.5.30:
+
+This patch release fixes sed usage ('\s' vs '[[:space:]]') in
+slibtool's own build system. Release immediately in order to
+prevent build errors in strict build environments.
+
+- build system: ccenv_output_defs(): use conformant sed construct.
+
 0.5.29:
 
 This patch release provides a few important additions and bug fixes,
