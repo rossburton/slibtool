@@ -40,6 +40,7 @@ static int slbt_lconf_open(
 	int		fdparent;
 	struct stat	stcwd;
 	struct stat	stparent;
+	ino_t		stinode;
 
 	fdcwd      = slbt_driver_fdcwd(dctx);
 	fdlconfdir = fdcwd;
@@ -53,6 +54,7 @@ static int slbt_lconf_open(
 		return SLBT_SYSTEM_ERROR(dctx);
 
 	fdlconf = openat(fdlconfdir,"libtool",O_RDONLY,0);
+	stinode = stcwd.st_ino;
 
 	while (fdlconf < 0) {
 		fdparent = openat(fdlconfdir,"../",O_DIRECTORY,0);
@@ -72,8 +74,15 @@ static int slbt_lconf_open(
 				dctx,SLBT_ERR_LCONF_OPEN);
 		}
 
+		if (stparent.st_ino == stinode) {
+			close(fdparent);
+			return SLBT_CUSTOM_ERROR(
+				dctx,SLBT_ERR_LCONF_OPEN);
+		}
+
 		fdlconfdir = fdparent;
 		fdlconf    = openat(fdlconfdir,"libtool",O_RDONLY,0);
+		stinode    = stparent.st_ino;
 	}
 
 	slbt_lconf_close(fdcwd,fdlconfdir);
