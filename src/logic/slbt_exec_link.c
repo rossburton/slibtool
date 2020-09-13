@@ -1257,17 +1257,17 @@ static int slbt_exec_link_create_library(
 	const char *			dsofilename,
 	const char *			relfilename)
 {
-	int	fdcwd;
-	char ** parg;
-	char ** xarg;
-	char *	ccwrap;
+	int                     fdcwd;
+	char **                 parg;
+	char **                 xarg;
+	char *	                ccwrap;
 	const char *            laout;
 	const char *            dot;
-	char	cwd    [PATH_MAX];
-	char	output [PATH_MAX];
-	char	soname [PATH_MAX];
-	char	symfile[PATH_MAX];
-	struct slbt_deps_meta depsmeta = {0,0,0,0};
+	char                    cwd    [PATH_MAX];
+	char                    output [PATH_MAX];
+	char                    soname [PATH_MAX];
+	char                    symfile[PATH_MAX];
+	struct slbt_deps_meta   depsmeta = {0,0,0,0};
 
 	/* initial state */
 	slbt_reset_arguments(ectx);
