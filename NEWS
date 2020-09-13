@@ -1,3 +1,13 @@
+0.5.31:
+
+This patch release fixes a regression in the 0.5.29 release,
+specifically in the implementation of the -module semantics,
+as well as a latent bug in the algorithm for finding a build
+project's generated libtool script.
+
+- link mode: properly handle .la targets built with -module.
+- libtool finder: exit loop upon reaching the root directory.
+
 0.5.30:
 
 This patch release fixes sed usage ('\s' vs '[[:space:]]') in
