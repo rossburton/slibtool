@@ -1,0 +1,61 @@
+name: slibtool CI
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: configure
+      run: ./configure --prefix=./install/
+    - name: make
+      run: make -j V=1
+    - name: make install
+      run: make -j V=1 install
+    - name: deploy
+      uses: actions/upload-artifact@v2
+      with:
+        name: slibtool
+        path: install/
+
+  test-libxml2:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+    - name: Fetch slibtool
+      uses: actions/download-artifact@v2
+      with:
+        name: slibtool
+    - name: Build libxml2
+      run: |
+        chmod +x ./bin/*
+        export PATH=$PATH:$(pwd)/bin
+        export MAKEFLAGS='LIBTOOL=rdlibtool'
+        cd ..
+        wget http://www.xmlsoft.org/sources/libxml2-2.9.10.tar.gz
+        tar zxf libxml2-2.9.10.tar.gz
+        cd libxml2-2.9.10
+        ./configure
+        make -j V=1
+        make install V=1 DESTDIR=$(pwd)/install/
+
+  test-nss-mdns:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+    - name: Fetch slibtool
+      uses: actions/download-artifact@v2
+      with:
+        name: slibtool
+    - name: Build nss-mdns
+      run: |
+        chmod +x ./bin/*
+        export PATH=$PATH:$(pwd)/bin
+        export MAKEFLAGS='LIBTOOL=rdlibtool'
+        cd ..
+        wget https://github.com/lathiat/nss-mdns/releases/download/v0.14.1/nss-mdns-0.14.1.tar.gz
+        tar zxvf nss-mdns-0.14.1.tar.gz
+        cd nss-mdns-0.14.1
+        ./configure
+        make -j V=1
+        make install V=1 DESTDIR=$(pwd)/install/
