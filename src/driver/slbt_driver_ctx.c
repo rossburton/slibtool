@@ -407,6 +407,15 @@ static int slbt_split_argv(
 		} else if (!strncmp(argv[i],"-L",2)) {
 			fcopy = true;
 
+		} else if (!strcmp(argv[i],"-Xlinker")) {
+			*dargv++ = dst;
+			*dst++ = '-';
+			*dst++ = 'W';
+			*dst++ = 'l';
+			*dst++ = ',';
+			strcpy(dst,argv[++i]);
+			dst += strlen(dst)+1;
+
 		} else if (!strcmp(argv[i],"--library-path")) {
 			*dargv++ = dst;
 			*dst++ = '-';
